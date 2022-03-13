@@ -1,8 +1,12 @@
-/*
- * thread_key.c
- *
- *  Created on: 2022年3月12日
- *      Author: 11657
+/**
+ * @file thread_life.c 
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 生命检测线程，判读程序有没有跑飞的第一判据
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #include "tjrc_threads.h"
@@ -11,6 +15,10 @@ static void thread_life_entry(void *param);
 
 rt_thread_t tid_life = RT_NULL;
 
+/**
+ * @brief 初始化生命检测线程
+ * 
+ */
 void tjrc_thread_life_init(void)
 {
     rt_err_t rtt_res;

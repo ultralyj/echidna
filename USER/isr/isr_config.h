@@ -1,16 +1,30 @@
-
+/**
+ * @file isr_config.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 中断优先级配置头文件
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #ifndef _isr_config_h
 #define _isr_config_h
 
+/**
+ * @brief 优先级范围为0-255 数值越大，优先级越高（与主流相反）
+ * 
+ */
 
 
 
-//------------�����жϲ�����ض���------------
 #define	UART0_INT_SERVICE       IfxSrc_Tos_cpu0
 #define UART0_TX_INT_PRIO       70
 #define UART0_RX_INT_PRIO       71
 #define UART0_ER_INT_PRIO       72
 
+#define ISR_PRIORITY_DMA_CH1    93
+#define ISR_PRIORITY_DMA_CH2    94
 
 #define ISR_PRIORITY_ASCLIN0_TX 70
 #define ISR_PRIORITY_ASCLIN0_RX 71

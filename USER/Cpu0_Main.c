@@ -9,7 +9,7 @@
  * 
  */
 
-#include "Cpu0_Main.h"
+#include <main.h>
 
 IFX_ALIGN(4) IfxCpu_syncEvent g_cpuSyncEvent = 0;
 
@@ -28,16 +28,17 @@ int main(void)
     extern rt_sem_t camera_irq_sem;
     imu_irq_sem = rt_sem_create("basem", 0, RT_IPC_FLAG_FIFO);
     camera_irq_sem = rt_sem_create("casem", 0, RT_IPC_FLAG_FIFO);
+
     /* 配置片上外设和片外模块 */
-
-
     tjrc_setHardware();
     tjrc_setPeripherals();
 
-    balance_thread_init();
+    /* 开启各个线程 */
     tjrc_thread_life_init();
     tjrc_thread_key_init();
+    tjrc_thread_balance_init();
     tjrc_thread_camera_init();
+
     sysInit_cpltFlag = 1;
     /* 主循环 */
     while(1)

@@ -1,8 +1,12 @@
-/*
- * tjrc_basic.h
- *
- *  Created on: 2022年2月25日
- *      Author: 11657
+/**
+ * @file tjrc_basic.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 对于一些基本的GPIO，如BEEP,LED,KEY提供函数支持的头文件
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef __TJRC_BASIC_H__
@@ -27,6 +31,10 @@
 
 #define BEEP_PIN &MODULE_P11, 10
 
+/**
+ * @brief 按键通道定义
+ * 
+ */
 typedef enum
 {
     KEY0 = 0u,
@@ -35,6 +43,10 @@ typedef enum
     KEY3 = 3u,
 } keyChannel;
 
+/**
+ * @brief 按键状态定义
+ * 
+ */
 typedef enum
 {
     KEY_Released = 0u,
@@ -42,11 +54,12 @@ typedef enum
     KEY_Longpressed = 2u,
 } keyValue;
 
-
-/* 按键开关相关函数 */
-keyValue tjrc_keyChannel_check(keyChannel channel);
+/* LED相关函数 */
 void tjrc_setLed_pin(void);
+/* 按键开关相关函数 */
 void tjrc_setKeys_pin(void);
+keyValue tjrc_keyChannel_check(keyChannel channel);
+/* 蜂鸣器相关函数 */
 void tjrc_setBeep_pin(void);
 
 #endif

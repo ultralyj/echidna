@@ -1,17 +1,25 @@
-/*
- * thread_key.c
- *
- *  Created on: 2022年3月12日
- *      Author: 11657
+/**
+ * @file thread_key.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 按键扫描线程
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #include "tjrc_threads.h"
 
 static void tjrc_thread_key_entry(void *param);
-
+/* 按键的信号量 */
 rt_sem_t key0_sem,key1_sem,key2_sem,key3_sem;
 rt_thread_t key_tid = RT_NULL;
 
+/**
+ * @brief 初始化按键线程
+ * 
+ */
 void tjrc_thread_key_init(void)
 {
     rt_err_t rtt_res;
@@ -29,10 +37,16 @@ void tjrc_thread_key_init(void)
     }
 }
 
+/**
+ * @brief 按键线程的入口函数
+ * 
+ * @param param 
+ */
 static void tjrc_thread_key_entry(void *param)
 {
     while(1)
     {
+        /* 如果扫描到有按键被按下，则释放对应的信号量 */
         if(tjrc_keyChannel_check(KEY0)==KEY_Pressed)
         {
             rt_sem_release(key0_sem);

@@ -1,11 +1,15 @@
-/*
- * Ifx_MT9V03X.c
- *
- *  Created on: 2021年3月14日
- *      Author: 11657
+/**
+ * @file tjrc_mt9v03x.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
-#include "tjrc_mt9v032.h"
+#include <tjrc_mt9v03x.h>
 
 /* 摄像头需要用到的全局变量 */
 static uint8_t recBuff[3];
@@ -62,7 +66,7 @@ static void tjrc_mt9v03x_setFinshFlag(void)
  * @brief 清除读取图像完成标志位
  * @return NONE
  */
-uint8_t tjrc_mt9v032_getFinishFlag(void)
+uint8_t tjrc_mt9v03x_getFinishFlag(void)
 {
     return MT9V03X_finishFlag;
 }
@@ -296,7 +300,7 @@ uint16_t tjrc_mt9v03x_getVision(void)
 
 
 
-void Ifx_MT9V03X_displayImage(uint8_t* image, uint8_t threshold)
+void tjrc_mt9v03x_displayImage(uint8_t* image, uint8_t threshold)
 {
     static uint8_t frameBuff[720];
     tjrc_st7735_setBusy(1);
@@ -321,7 +325,7 @@ void Ifx_MT9V03X_displayImage(uint8_t* image, uint8_t threshold)
     tjrc_st7735_setBusy(0);
 }
 
-void Ifx_MT9V03X_displayImage_gray(uint8_t* image)
+void tjrc_mt9v03x_displayImage_gray(uint8_t* image)
 {
 
     tjrc_st7735_setBusy(1);
@@ -336,7 +340,7 @@ void Ifx_MT9V03X_displayImage_gray(uint8_t* image)
             MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2+1]/4;
         }
     }
-    tjrc_st7735_dispImage_gray(MT9V03X_image_div4, MT9V03X_W/2, MT9V03X_H/2, 0, 24);
+    tjrc_st7735_dispImage_gray(MT9V03X_image_div4, MT9V03X_W/2, MT9V03X_H/2, 34, 28);
     tjrc_st7735_setBusy(0);
 }
 

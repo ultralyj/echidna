@@ -1,45 +1,37 @@
-/*********************************************************************************************************************
- * COPYRIGHT NOTICE
- * Copyright (c) 2020,��ɿƼ�
- * All rights reserved.
- * ��������QQȺ����Ⱥ��824575535
- *
- * �����������ݰ�Ȩ������ɿƼ����У�δ��������������ҵ��;��
- * ��ӭ��λʹ�ò������������޸�����ʱ���뱣����ɿƼ��İ�Ȩ������
- *
- * @file       		main
- * @company	   		�ɶ���ɿƼ����޹�˾
- * @author     		��ɿƼ�(QQ3184284598)
- * @version    		�鿴doc��version�ļ� �汾˵��
- * @Software 		ADS v1.2.2
- * @Target core		TC264D
- * @Taobao   		https://seekfree.taobao.com/
- * @date       		2020-3-23
- ********************************************************************************************************************/
+/**
+ * @file Cpu1_Main.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief CPU1 main文件
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
+#include "main.h"
 #include "headfile.h"
 #pragma section all "cpu1_dsram"
-//���������#pragma section all restore���֮���ȫ�ֱ���������CPU1��RAM��
-
 
 
 void core1_main(void)
 {
 	disableInterrupts();
+	/* 发送内核同步信号 */
 	IfxCpu_emitEvent(&g_cpuSyncEvent);
 	IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
+	/* 禁用看门狗 */
     IfxScuWdt_disableCpuWatchdog(IfxScuWdt_getCpuWatchdogPassword());
-    enableInterrupts();
-    //extern uint8_t sysInit_flag;
 
+    enableInterrupts();
+    /* 等待所有外设初始化完成 */
+    extern uint8_t sysInit_cpltFlag;
+    while(!sysInit_cpltFlag);
     while (TRUE)
     {
-        extern uint8_t sysInit_cpltFlag;
-        while(!sysInit_cpltFlag);
-        printf("cpu1 ok\r\n");
-        while(1);
-		//�û��ڴ˴���д�������
 
+        printf("[cpu1] ok\r\n");
+        while(1);
     }
 }
 

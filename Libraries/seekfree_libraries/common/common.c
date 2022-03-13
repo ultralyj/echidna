@@ -17,7 +17,7 @@
  * @date       		2020-3-23
  ********************************************************************************************************************/
 
-#include "Cpu0_Main.h"
+#include <main.h>
 #include "IfxScuEru.h"
 #include "SysSe/Bsp/Bsp.h"
 #include "TC264_config.h"

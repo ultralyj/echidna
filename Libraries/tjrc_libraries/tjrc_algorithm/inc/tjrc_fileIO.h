@@ -1,8 +1,12 @@
-/*
- * tjrc_fileIO.h
- *
- *  Created on: 2022年3月12日
- *      Author: 11657
+/**
+ * @file tjrc_fileIO.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 文件读写相关处理算法
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_ALGORITHM_INC_TJRC_FILEIO_H_

@@ -1,8 +1,13 @@
-/*
- * tjrc_20602.h
- *
- *  Created on: 2022年3月10日
- *      Author: 11657
+/**
+ * @file tjrc_icm20602.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief   IMU: ICM20602 的驱动程序，
+ *              ICM20602可以使用SPI和I2C两种协议通信，此处使用硬件I2C+中断输出
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_PERPHERALS_TJRC_ICM20602_H_
@@ -14,7 +19,7 @@
 
 /* ICM20602 I2C总线地址（上拉69h，下拉68h） */
 #define     ICM20602_DEV_ADDR           0x69
-
+/* ICM20602的寄存器地址 */
 #define     ICM20602_XG_OFFS_TC_H       0x04
 #define     ICM20602_XG_OFFS_TC_L       0x05
 #define     ICM20602_YG_OFFS_TC_H       0x07

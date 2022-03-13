@@ -1,8 +1,12 @@
-/*
- * tjrc_systemInit.h
- *
- *  Created on: 2022年3月10日
- *      Author: 11657
+/**
+ * @file tjrc_systemInit.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef USER_TJRC_SYSTEMINIT_H_

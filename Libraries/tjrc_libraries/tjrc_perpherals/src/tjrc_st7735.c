@@ -68,6 +68,53 @@ void tjrc_st7735_dispStr612(uint16_t dx, uint16_t dy,
 }
 
 /**
+ * @brief 向屏幕画一个点
+ * @param x    (uint16)点的横坐标
+ * @param y    (uint16)点的纵坐标
+ * @param color (uint16)颜色
+ * @return NONE
+ */
+void tjrc_st7735_drawPoint(uint16_t x, uint16_t y, uint16_t color)
+{
+    tjrc_st7735_setRegion(x, y, x, y);
+    st7735_WR_DATA(color);
+}
+
+/**
+ * @brief 向屏幕画一个矩形填充
+ * @param x    (uint16)点的横坐标
+ * @param y    (uint16)点的纵坐标
+ * @param width (uint16)宽度
+ * @param height(uint16)高度
+ * @param color (uint16)颜色
+ * @return NONE
+ */
+void tjrc_st7735_drawRectangle(uint16_t x, uint16_t y,uint16_t width, uint16_t height, uint16_t color)
+{
+    tjrc_st7735_setRegion(x, y, x+width-1, y+height-1);
+    for(uint32_t i=0;i<width*height;i++)
+        st7735_WR_DATA(color);
+}
+
+/**
+ * @brief 向屏幕画一个矩形边框
+ * @param x    (uint16)点的横坐标
+ * @param y    (uint16)点的纵坐标
+ * @param width (uint16)宽度
+ * @param height(uint16)高度
+ * @param color (uint16)颜色
+ * @return NONE
+ */
+void tjrc_st7735_drawBox(uint16_t x, uint16_t y,uint16_t width, uint16_t height, uint16_t color)
+{
+    tjrc_st7735_drawRectangle(x,y,width,1,color);
+    tjrc_st7735_drawRectangle(x,y,1,height,color);
+    tjrc_st7735_drawRectangle(x+width,y,1,height,color);
+    tjrc_st7735_drawRectangle(x,y+height,width,1,color);
+}
+
+
+/**
  * @brief 向屏幕写入一幅点阵位图
  * @param image     (uint8_t*)位图指针
  * @param width     (uint16_t)图像宽度（像素）

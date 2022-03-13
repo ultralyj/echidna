@@ -1,16 +1,12 @@
-/*
- * tjrc_fontCode.c
- *
- *  Created on: 2022年3月9日
- *      Author: 11657
- */
-
-
-/*
- * Ifx_FontCode.c
- *
- *  Created on: 2021年2月13日
- *      Author: luoyijie
+/**
+ * @file tjrc_fontCode.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 6*12 ASCII字库文件
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 #include "stdint.h"
 

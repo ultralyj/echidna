@@ -1,8 +1,12 @@
-/*
- * tjrc_mt9v032.h
- *
- *  Created on: 2022年3月9日
- *      Author: 11657
+/**
+ * @file tjrc_mt9v03x.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief MT9V03X系列灰度摄像头驱动程序（总钻风）
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_PERPHERALS_TJRC_MT9V032_H_
@@ -10,6 +14,7 @@
 
 #include "tjrc_asclin.h"
 #include "tjrc_peripherals.h"
+
 /* 摄像头读取数据的长宽 */
 #define MT9V03X_W 120
 #define MT9V03X_H 80
@@ -43,7 +48,7 @@ typedef enum
 extern uint8_t MT9V03X_image[MT9V03X_H][MT9V03X_W];
 
 /* 摄像头采集状态感知 */
-uint8_t  tjrc_mt9v032_getFinishFlag(void);
+uint8_t  tjrc_mt9v03x_getFinishFlag(void);
 void  tjrc_mt9v03x_clearFinishFlag(void);
 
 /* 摄像头基本配置信息的建立与读取 */
@@ -51,16 +56,12 @@ uint8_t tjrc_setMt9v03x(void);
 uint8_t tjrc_mt9v03x_setConf(sint16 buff[CONFIG_FINISH - 1][2]);
 uint8_t tjrc_mt9v03x_getConf(sint16 buff[CONFIG_FINISH - 1][2]);
 uint16_t tjrc_mt9v03x_getVision(void);
-
-
 /* 测试函数 */
-void Ifx_MT9V03X_displayImage(uint8_t* image, uint8_t threshold);
-void Ifx_MT9V03X_displayImage_gray(uint8_t* image);
+void tjrc_mt9v03x_displayImage(uint8_t* image, uint8_t threshold);
+void tjrc_mt9v03x_displayImage_gray(uint8_t* image);
 /* 中断回调函数 */
 void tjrc_mt9v03x_uartCallBack(void);
 void tjrc_mt9v03x_vSync(void);
 void tjrc_mt9v03x_dmaCallBack(void);
-
-
 
 #endif /* LIBRARIES_TJRC_LIBRARIES_TJRC_PERPHERALS_TJRC_MT9V032_H_ */

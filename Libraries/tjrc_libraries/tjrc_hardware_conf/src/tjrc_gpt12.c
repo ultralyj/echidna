@@ -1,8 +1,12 @@
-/*
- * tjrc_gpt12.c
- *
- *  Created on: 2022年2月23日
- *      Author: 11657
+/**
+ * @file tjrc_gpt12.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #include "tjrc_gpt12.h"

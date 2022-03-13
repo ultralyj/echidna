@@ -17,28 +17,52 @@
 
 
 /**
- * @brief QSPI0 RX 中断响应函数
+ * @brief QSPI0 RX DMA中断响应函数
  * 
  */
-IFX_INTERRUPT(QSPI0_RX_IRQHandler, 0, ISR_PRIORITY_QSPI0_RX)
+IFX_INTERRUPT(QSPI0_RX_DMA_IRQHandler, 0, ISR_PRIORITY_DMA_CH2)
 {
     rt_interrupt_enter();
-	extern IfxQspi_SpiMaster MasterHandle;
-    IfxQspi_SpiMaster_isrReceive(&MasterHandle);
+	extern IfxQspi_SpiMaster qspi0_master_handler;
+	IfxQspi_SpiMaster_isrDmaTransmit(&qspi0_master_handler);
     rt_interrupt_leave();
 }
 
 /**
- * @brief QSPI0 TX 中断响应函数
+ * @brief QSPI0 TX DMA中断响应函数
  * 
  */
-IFX_INTERRUPT(QSPI0_TX_IRQHandler, 0, ISR_PRIORITY_QSPI0_TX)
+IFX_INTERRUPT(QSPI0_TX_DMA_IRQHandler, 0, ISR_PRIORITY_DMA_CH1)
 {
     rt_interrupt_enter();
-	extern IfxQspi_SpiMaster MasterHandle;
-    IfxQspi_SpiMaster_isrReceive(&MasterHandle);
+	extern IfxQspi_SpiMaster qspi0_master_handler;
+	IfxQspi_SpiMaster_isrDmaReceive(&qspi0_master_handler);
     rt_interrupt_leave();
 }
+
+///**
+// * @brief QSPI0 RX 中断响应函数
+// *
+// */
+//IFX_INTERRUPT(QSPI0_RX_IRQHandler, 0, ISR_PRIORITY_QSPI0_RX)
+//{
+//    rt_interrupt_enter();
+//    extern IfxQspi_SpiMaster qspi0_master_handler;
+//    IfxQspi_SpiMaster_isrReceive(&qspi0_master_handler);
+//    rt_interrupt_leave();
+//}
+//
+///**
+// * @brief QSPI0 TX 中断响应函数
+// *
+// */
+//IFX_INTERRUPT(QSPI0_TX_IRQHandler, 0, ISR_PRIORITY_QSPI0_TX)
+//{
+//    rt_interrupt_enter();
+//    extern IfxQspi_SpiMaster qspi0_master_handler;
+//    IfxQspi_SpiMaster_isrReceive(&qspi0_master_handler);
+//    rt_interrupt_leave();
+//}
 
 /**
  * @brief QSPI0 ER 中断响应函数
@@ -47,8 +71,8 @@ IFX_INTERRUPT(QSPI0_TX_IRQHandler, 0, ISR_PRIORITY_QSPI0_TX)
 IFX_INTERRUPT(QSPI0_ER_IRQHandler, 0, ISR_PRIORITY_QSPI0_ER)
 {
     rt_interrupt_enter();
-	extern IfxQspi_SpiMaster MasterHandle;
-    IfxQspi_SpiMaster_isrReceive(&MasterHandle);
+	extern IfxQspi_SpiMaster qspi0_master_handler;
+    IfxQspi_SpiMaster_isrReceive(&qspi0_master_handler);
     rt_interrupt_leave();
 }
 

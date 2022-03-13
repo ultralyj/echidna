@@ -1,8 +1,12 @@
-/*
- * tjrc_asclin.c
- *
- *  Created on: 2022年2月24日
- *      Author: 11657
+/**
+ * @file tjrc_asclin.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #include "tjrc_asclin.h"

@@ -1,8 +1,12 @@
-/*
- * tjrc_iic.h
- *
- *  Created on: 2022年2月23日
- *      Author: 11657
+/**
+ * @file tjrc_iic.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief I2C总线硬件配置层头文件
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_IIC_H_
@@ -13,6 +17,5 @@
 #include "stdint.h"
 
 void tjrc_setIic(void);
-
 
 #endif /* LIBRARIES_TJRC_LIBRARIES_TJRC_IIC_H_ */

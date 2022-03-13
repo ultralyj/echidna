@@ -1,10 +1,13 @@
-/*
- * tjrc_eru.h
- *
- *  Created on: 2022年2月24日
- *      Author: 11657
+/**
+ * @file tjrc_eru.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief ERU硬件配置层头文件，配置外部中断和DMA相关参数
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
-
 #ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_ERU_H_
 #define LIBRARIES_TJRC_LIBRARIES_TJRC_ERU_H_
 

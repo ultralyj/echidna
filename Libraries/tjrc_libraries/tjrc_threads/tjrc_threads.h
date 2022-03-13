@@ -18,5 +18,7 @@ void tjrc_thread_life_init(void);
 void tjrc_thread_key_init(void);
 void tjrc_thread_camera_init(void);
 
+void tjrc_thread_balance_init(void);
+void tjrc_thread_run_init(void);
 
 #endif /* LIBRARIES_TJRC_LIBRARIES_TJRC_THREADS_TJRC_THREADS_H_ */

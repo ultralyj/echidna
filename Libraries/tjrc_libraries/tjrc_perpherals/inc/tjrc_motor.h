@@ -1,8 +1,12 @@
-/*
- * tjrc_motor.h
- *
- *  Created on: 2022年3月10日
- *      Author: 11657
+/**
+ * @file tjrc_motor.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 电机驱动程序，目前支持按照DRV8701E和DRV8701P的逻辑驱动电机
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_PERPHERALS_TJRC_MOTOR_H_

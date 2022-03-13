@@ -1,8 +1,12 @@
-/*
- * tjrc_sdmmc.c
- *
- *  Created on: 2022年2月7日
- *      Author: 11657
+/**
+ * @file tjrc_sdmmc.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
 #include "tjrc_sdmmc.h"
@@ -125,7 +129,7 @@ int32_t tjrc_setSdmmc(void)
         }
     }
     /* 提高SPI通信速率 */
-    tjrc_setSpiChannel(10000000);
+    tjrc_setSpiChannel(32000000);
     if(sdmmc_type!=SDMMC_TYPE_ERR)
     {
         switch(sdmmc_type)
@@ -386,11 +390,12 @@ static uint8_t tjrc_sdmmcReceiveBlock(uint8_t* rxd,uint16_t len)
         return 1;
     }
     /* 开始接收数据 */
-    while(len--)
-    {
-        *rxd=tjrc_spiTransmitByte(0xFF);
-        rxd++;
-    }
+//    while(len--)
+//    {
+//        *rxd=tjrc_spiTransmitByte(0xFF);
+//        rxd++;
+//    }
+    tjrc_spiTransmit(NULL_PTR,rxd,len);
     /* dummy CRC */
     tjrc_spiTransmitByte(0xFF);
     tjrc_spiTransmitByte(0xFF);
@@ -414,11 +419,7 @@ static uint8_t tjrc_sdmmcTransmitBlock(uint8_t* txd, uint8_t cmd)
     tjrc_spiTransmitByte(cmd);
     if(cmd!=0XFD)
     {
-        for(int t=0;t<512;t++)
-        {
-            tjrc_spiTransmitByte(txd[t]);
-        }
-      // tjrc_spiTransmit(txd,NULL_PTR,512);
+        tjrc_spiTransmit(txd,NULL_PTR,512);
         tjrc_spiTransmitByte(0xFF);
         tjrc_spiTransmitByte(0xFF);
 

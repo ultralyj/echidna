@@ -1,8 +1,19 @@
+/**
+ * @file tjrc_sdmmc.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 使用SPI方式驱动SDMMC卡片
+ * @version 0.1
+ * @date 2022-03-13
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 #ifndef __TJRC_SDMMC_H__
 #define __TJRC_SDMMC_H__
 
 #include "tjrc_peripherals.h"
 
+/* SDMMC命令 */
 #define SDMMC_CMD0    0       //卡复位
 #define SDMMC_CMD1    1
 #define SDMMC_CMD8    8       //命令8 ，SEND_IF_COND
@@ -20,6 +31,7 @@
 #define SDMMC_CMD58   58      //命令58，读OCR信息
 #define SDMMC_CMD59   59      //命令59，使能/禁止CRC，应返回0x00
 
+/* SDMMC卡类型 */
 #define SDMMC_TYPE_ERR     0X00
 #define SDMMC_TYPE_MMC     0X01
 #define SDMMC_TYPE_V1      0X02

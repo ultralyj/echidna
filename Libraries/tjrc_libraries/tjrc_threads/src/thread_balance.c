@@ -1,15 +1,15 @@
 /**
- * @file Scheduling.c
+ * @file thread_balance.c
  * @author YYYDS team (1951578@tongji.edu.cn)
- * @brief
+ * @brief 平衡线程
  * @version 0.1
- * @date 2022-03-10
- *
+ * @date 2022-03-13
+ * 
  * @copyright Copyright (c) 2022
- *
+ * 
  */
 
-#include "Scheduling.h"
+#include "tjrc_threads.h"
 
 /* 速度环使能标志变量 */
 const uint8_t speedLoop_enable = 1;
@@ -23,11 +23,65 @@ const uint8_t turn_enable = 1;
  *
  */
 rt_sem_t imu_irq_sem = RT_NULL;
+rt_sem_t Run_sem = RT_NULL;
+
+uint8_t balance_thread_flag = 0;
+rt_thread_t balance_tid = RT_NULL;
+rt_thread_t Run_tid = RT_NULL;
+
+static void balance_entry(void *parameter);
+static void Run_entry(void *parameter);
+
+void tjrc_thread_balance_init(void)
+{
+
+    rt_err_t rtt_res;
+    balance_tid = rt_thread_create("balance", balance_entry, RT_NULL, 1024, 3, 30);
+    if (balance_tid != RT_NULL)
+    {
+        rtt_res = rt_thread_startup(balance_tid);
+        rt_kprintf("[rt-thread]create and startup thread: balance(%d)\r\n",rtt_res);
+    }
+    balance_thread_flag = 1;
+}
+
+void tjrc_thread_run_init(void)
+{
+
+    rt_err_t rtt_res;
+    uint32_t duty[3] = {50, 50, 50};
+    Run_sem = rt_sem_create("Run_sem", 0, RT_IPC_FLAG_FIFO);
+    Run_tid = rt_thread_create("run", Run_entry, RT_NULL, 512, 26, 30);
+    if (Run_tid != RT_NULL)
+    {
+        rtt_res = rt_thread_startup(Run_tid);
+        rt_kprintf("[rt-thread]create and startup thread: run(%d)\r\n",rtt_res);
+    }
+    tjrc_setCcu60_pwm();
+    tjrc_ccu60pwm_setDutyCycle(duty, 1);
+
+}
+
+
+static void Run_entry(void *parameter)
+{
+    while (1)
+    {
+        if (rt_sem_take(Run_sem, RT_WAITING_FOREVER) == RT_EOK)
+        {
+            if (run_direct == 1)
+                target_speed += 100;
+            else
+                target_speed -= 100;
+        }
+    }
+}
+
 
 /**
  * @brief PID控制线程入口函数
- * 
- * @param parameter 
+ *
+ * @param parameter
  */
 static void balance_entry(void *parameter)
 {
@@ -63,7 +117,7 @@ static void balance_entry(void *parameter)
             /* 获取IMU信息，进行卡尔曼滤波，再输入到直立环PID得到动量轮PWM输出 */
             tjrc_getAngle_kalman(&b_angle_kalman, &b_angle_dot); //得到计算的初始角度
             flywheel_pwmOut = tjrc_pid_balance(b_angle_kalman, b_angle_dot);
-            
+
             /* 在电机使能的状态下，平行处理动量轮速度环，后轮驱动和舵机 */
             if (motor_enable)
             {
@@ -77,7 +131,7 @@ static void balance_entry(void *parameter)
                     }
                     speedLoop_cnt++;
                 }
-                
+
 
                 /* 舵机方向（1/2） */
                 if (turn_enable)
@@ -118,44 +172,5 @@ static void balance_entry(void *parameter)
     }
 }
 
-static rt_thread_t balance_tid = RT_NULL;
 
-uint8_t balance_thread_flag = 0;
-void balance_thread_init(void)
-{
-    balance_tid = rt_thread_create("balance_thread", balance_entry, RT_NULL, 1024, 3, 30);
-    if (balance_tid != RT_NULL)
-    {
-        rt_thread_startup(balance_tid);
-    }
-    balance_thread_flag = 1;
-}
 
-static void Run_entry(void *parameter)
-{
-    while (1)
-    {
-        if (rt_sem_take(Run_sem, RT_WAITING_FOREVER) == RT_EOK)
-        {
-            if (run_direct == 1)
-                target_speed += 100;
-            else
-                target_speed -= 100;
-        }
-    }
-}
-
-static rt_thread_t Run_tid = RT_NULL;
-rt_sem_t Run_sem = RT_NULL;
-void Run_init(void)
-{
-    uint32_t duty[3] = {50, 50, 50};
-    Run_tid = rt_thread_create("Run_thread", Run_entry, RT_NULL, 512, 26, 30);
-    if (Run_tid != RT_NULL)
-    {
-        rt_thread_startup(Run_tid);
-    }
-    tjrc_setCcu60_pwm();
-    tjrc_ccu60pwm_setDutyCycle(duty, 1);
-    Run_sem = rt_sem_create("Run_sem", 0, RT_IPC_FLAG_FIFO);
-}
