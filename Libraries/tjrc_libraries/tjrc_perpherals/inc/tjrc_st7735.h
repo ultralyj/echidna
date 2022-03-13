@@ -58,6 +58,7 @@ void tjrc_st7735_clean(uint16_t color);
 void tjrc_st7735_dispStr612(uint16_t dx, uint16_t dy, uint8_t *str, uint16_t color);
 /* 显示点图像 */
 void tjrc_st7735_dispImage(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color);
+void tjrc_st7735_dispImage_gray(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y);
 /* 获取屏幕当前状态 */
 uint8_t tjrc_st7735_getBusy(void);
 void tjrc_st7735_setBusy(uint8_t state);

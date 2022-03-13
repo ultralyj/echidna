@@ -57,7 +57,7 @@ void tjrc_setBeep_pin(void)
  * @return keyValue 按键的动作
  */
 
-keyValue XLW_checkKey(keyChannel channel)
+keyValue tjrc_keyChannel_check(keyChannel channel)
 {
     const uint32_t buttonDebounceTime = 20;
     const uint32_t buttonLongPressTime = 500;
@@ -90,7 +90,6 @@ keyValue XLW_checkKey(keyChannel channel)
         }
         else
         {
-            //stm32f1xx_writeLED(0x00);
             if (rt_tick_get() >= (buttonTimingStart[channel] + buttonDebounceTime))
             {
                 buttonAction[channel] = 1;

@@ -11,8 +11,8 @@
 #include "tjrc_asclin.h"
 #include "tjrc_peripherals.h"
 /* 摄像头读取数据的长宽 */
-#define MT9V03X_W 188
-#define MT9V03X_H 120
+#define MT9V03X_W 120
+#define MT9V03X_H 80
 
 /* 占用DMA通道 */
 #define MT9V03X_DMA_CH IfxDma_ChannelId_5
@@ -48,14 +48,14 @@ void  tjrc_mt9v03x_clearFinishFlag(void);
 
 /* 摄像头基本配置信息的建立与读取 */
 uint8_t tjrc_setMt9v03x(void);
-uint8_t tjrc_mt9v03x_setConf(sint16 buff[CONFIG_FINISH-1][2]);
+uint8_t tjrc_mt9v03x_setConf(sint16 buff[CONFIG_FINISH - 1][2]);
 uint8_t tjrc_mt9v03x_getConf(sint16 buff[CONFIG_FINISH - 1][2]);
 uint16_t tjrc_mt9v03x_getVision(void);
 
 
 /* 测试函数 */
 void Ifx_MT9V03X_displayImage(uint8_t* image, uint8_t threshold);
-
+void Ifx_MT9V03X_displayImage_gray(uint8_t* image);
 /* 中断回调函数 */
 void tjrc_mt9v03x_uartCallBack(void);
 void tjrc_mt9v03x_vSync(void);

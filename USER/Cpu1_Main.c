@@ -1,16 +1,16 @@
 /*********************************************************************************************************************
  * COPYRIGHT NOTICE
- * Copyright (c) 2020,Öð·É¿Æ¼¼
+ * Copyright (c) 2020,ï¿½ï¿½É¿Æ¼ï¿½
  * All rights reserved.
- * ¼¼ÊõÌÖÂÛQQÈº£ºÈýÈº£º824575535
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½QQÈºï¿½ï¿½ï¿½ï¿½Èºï¿½ï¿½824575535
  *
- * ÒÔÏÂËùÓÐÄÚÈÝ°æÈ¨¾ùÊôÖð·É¿Æ¼¼ËùÓÐ£¬Î´¾­ÔÊÐí²»µÃÓÃÓÚÉÌÒµÓÃÍ¾£¬
- * »¶Ó­¸÷Î»Ê¹ÓÃ²¢´«²¥±¾³ÌÐò£¬ÐÞ¸ÄÄÚÈÝÊ±±ØÐë±£ÁôÖð·É¿Æ¼¼µÄ°æÈ¨ÉùÃ÷¡£
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ý°ï¿½È¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¿Æ¼ï¿½ï¿½ï¿½ï¿½Ð£ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òµï¿½ï¿½Í¾ï¿½ï¿½
+ * ï¿½ï¿½Ó­ï¿½ï¿½Î»Ê¹ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ë±£ï¿½ï¿½ï¿½ï¿½É¿Æ¼ï¿½ï¿½Ä°ï¿½È¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  *
  * @file       		main
- * @company	   		³É¶¼Öð·É¿Æ¼¼ÓÐÏÞ¹«Ë¾
- * @author     		Öð·É¿Æ¼¼(QQ3184284598)
- * @version    		²é¿´docÄÚversionÎÄ¼þ °æ±¾ËµÃ÷
+ * @company	   		ï¿½É¶ï¿½ï¿½ï¿½É¿Æ¼ï¿½ï¿½ï¿½ï¿½Þ¹ï¿½Ë¾
+ * @author     		ï¿½ï¿½É¿Æ¼ï¿½(QQ3184284598)
+ * @version    		ï¿½é¿´docï¿½ï¿½versionï¿½Ä¼ï¿½ ï¿½æ±¾Ëµï¿½ï¿½
  * @Software 		ADS v1.2.2
  * @Target core		TC264D
  * @Taobao   		https://seekfree.taobao.com/
@@ -19,27 +19,26 @@
 
 #include "headfile.h"
 #pragma section all "cpu1_dsram"
-//½«±¾Óï¾äÓë#pragma section all restoreÓï¾äÖ®¼äµÄÈ«¾Ö±äÁ¿¶¼·ÅÔÚCPU1µÄRAMÖÐ
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½#pragma section all restoreï¿½ï¿½ï¿½Ö®ï¿½ï¿½ï¿½È«ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½CPU1ï¿½ï¿½RAMï¿½ï¿½
 
 
 
 void core1_main(void)
 {
 	disableInterrupts();
-    IfxScuWdt_disableCpuWatchdog(IfxScuWdt_getCpuWatchdogPassword());
-    //ÓÃ»§ÔÚ´Ë´¦µ÷ÓÃ¸÷ÖÖ³õÊ¼»¯º¯ÊýµÈ
-
-
-
-
-
-	//µÈ´ýËùÓÐºËÐÄ³õÊ¼»¯Íê±Ï
 	IfxCpu_emitEvent(&g_cpuSyncEvent);
 	IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
+    IfxScuWdt_disableCpuWatchdog(IfxScuWdt_getCpuWatchdogPassword());
     enableInterrupts();
+    //extern uint8_t sysInit_flag;
+
     while (TRUE)
     {
-		//ÓÃ»§ÔÚ´Ë´¦±àÐ´ÈÎÎñ´úÂë
+        extern uint8_t sysInit_cpltFlag;
+        while(!sysInit_cpltFlag);
+        printf("cpu1 ok\r\n");
+        while(1);
+		//ï¿½Ã»ï¿½ï¿½Ú´Ë´ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     }
 }

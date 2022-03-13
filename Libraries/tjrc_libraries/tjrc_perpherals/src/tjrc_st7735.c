@@ -100,6 +100,34 @@ void tjrc_st7735_dispImage(uint8_t *image, uint16_t width, uint16_t height, uint
 }
 
 /**
+ * @brief 向屏幕写入一幅灰度图
+ * @param image     (uint8_t*)位图指针
+ * @param width     (uint16_t)图像宽度（像素）
+ * @param height    (uint16_t)图像高度（像素）
+ * @param dx        (uint16_t)字符起始横坐标(L->R)
+ * @param dy        (uint16_t)字符起始纵坐标(U->D)
+ * @param color     (uint16_t)字符串颜色
+ * @return NONE
+ */
+void tjrc_st7735_dispImage_gray(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y)
+{
+    tjrc_st7735_setBusy(1);
+    tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
+    for (uint32_t i = 0; i < height; i++)
+    {
+        uint16_t color_565;
+        for (uint32_t j = 0; j < width; j++)
+        {
+            color_565 = (uint16_t)(image[i * width + j]>>3)<<11;
+            color_565 += (uint16_t)(image[i * width + j]>>2)<<5;
+            color_565 += (uint16_t)(image[i * width + j]>>3);
+            st7735_WR_DATA(color_565);
+        }
+    }
+    tjrc_st7735_setBusy(0);
+}
+
+/**
  * @brief 用一种颜色填满屏幕，并把这种颜色设置为背景色
  * @param color (uint16_t)清屏的颜色
  * @return NONE

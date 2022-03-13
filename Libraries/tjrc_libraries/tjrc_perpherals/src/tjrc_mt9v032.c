@@ -14,7 +14,7 @@ static uint8_t MT9V03X_linkListNum = 0, recFlag = 0, MT9V03X_finishFlag = 0, MT9
 /* 摄像头存储单帧灰度图像的数组(4字节对齐) */
 uint8_t *cameraBufferAddr = NULL;
 IFX_ALIGN(4) uint8_t MT9V03X_image[MT9V03X_H][MT9V03X_W];
-
+IFX_ALIGN(4) uint8_t MT9V03X_image_div4[MT9V03X_H*MT9V03X_W/4];
 /**
  * @brief 从摄像头读取的配置文件
  * 
@@ -320,3 +320,23 @@ void Ifx_MT9V03X_displayImage(uint8_t* image, uint8_t threshold)
     tjrc_st7735_dispImage(frameBuff, 96, 60, 0, 24, RGB565_WHITE);
     tjrc_st7735_setBusy(0);
 }
+
+void Ifx_MT9V03X_displayImage_gray(uint8_t* image)
+{
+
+    tjrc_st7735_setBusy(1);
+    /* 简单缩放图像 */
+    for (uint32_t i = 0; i < MT9V03X_H/2; i++)
+    {
+        for (uint32_t j = 0; j < MT9V03X_W/2; j++)
+        {
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] = image[i*2*MT9V03X_W+j*2]/4;
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[i*2*MT9V03X_W+j*2+1]/4;
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2]/4;
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2+1]/4;
+        }
+    }
+    tjrc_st7735_dispImage_gray(MT9V03X_image_div4, MT9V03X_W/2, MT9V03X_H/2, 0, 24);
+    tjrc_st7735_setBusy(0);
+}
+

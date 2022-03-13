@@ -44,9 +44,9 @@ int32_t tjrc_setSpi(void)
     MasterConfig.base.mode = SpiIf_Mode_master;
     MasterConfig.base.maximumBaudrate = (float)SPI0_BUAD;
 
-    MasterConfig.base.rxPriority = 92;
-    MasterConfig.base.txPriority = 91;
-    MasterConfig.base.erPriority = 90;
+    MasterConfig.base.rxPriority = ISR_PRIORITY_QSPI0_RX;
+    MasterConfig.base.txPriority = ISR_PRIORITY_QSPI0_TX;
+    MasterConfig.base.erPriority = ISR_PRIORITY_QSPI0_ER;
     MasterConfig.base.isrProvider = IfxSrc_Tos_cpu0;
     MasterConfig.pins = &set_pin;
     /* 执行初始化 */
@@ -93,17 +93,10 @@ uint8_t tjrc_spiTransmitByte(uint8_t txd)
 
 int32_t tjrc_spiTransmit(uint8_t* txd, uint8_t* rxd, int32_t len)
 {
-    int32_t timeout = 0;
     IfxQspi_SpiMaster_exchange(&MasterChHandle, txd, rxd, (Ifx_SizeT)len);
     /* 等待传输结束  */
-    while (IfxQspi_SpiMaster_getStatus(&MasterChHandle) == SpiIf_Status_busy && timeout < 100)
-    {
-        rt_thread_mdelay(1);
-        timeout++;
-    }
-    if(timeout == 100)
-        return -1;
-    else
+    while (IfxQspi_SpiMaster_getStatus(&MasterChHandle) == SpiIf_Status_busy);
+
         return 0;
 }
 

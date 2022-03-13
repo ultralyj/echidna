@@ -54,6 +54,16 @@
 
 
 #include "Cpu/Std/Ifx_Types.h"
+
+/* rt-thread头文件 */
+#include <tjrc_hardware.h>
+#include <tjrc_peripherals.h>
+#include "rtthread.h"
+/* hardware：与底层片上外设配置相关代码 */
+#include "tjrc_algorithm.h"
+#include "ff.h"
+#include "tjrc_systemInit.h"
+#include "tjrc_threads.h"
 /******************************************************************************/
 /*-----------------------------------Macros-----------------------------------*/
 /******************************************************************************/

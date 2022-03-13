@@ -44,7 +44,7 @@ typedef enum
 
 
 /* 按键开关相关函数 */
-keyValue tjrc_checkKey(keyChannel channel);
+keyValue tjrc_keyChannel_check(keyChannel channel);
 void tjrc_setLed_pin(void);
 void tjrc_setKeys_pin(void);
 void tjrc_setBeep_pin(void);

@@ -38,15 +38,23 @@ void tjrc_initEru(IfxScu_Req_In *reqPin)
     IfxSrc_Tos eru_service;
     uint8_t eru_priority;
 
-    if (reqPin->channelId == 2 || reqPin->channelId == 6)
-        eru_service = IfxSrc_Tos_dma;
-    if (reqPin->channelId == 3 || reqPin->channelId == 7)
-        eru_service = IfxSrc_Tos_cpu0;
     if (reqPin->channelId == 0 || reqPin->channelId == 4)
         eru_service = IfxSrc_Tos_cpu0;
     if (reqPin->channelId == 1 || reqPin->channelId == 5)
         eru_service = IfxSrc_Tos_cpu0;
-    eru_priority = ISR_PRIORITY_ERU((uint8_t)reqPin->channelId);
+    if (reqPin->channelId == 2 || reqPin->channelId == 6)
+        eru_service = IfxSrc_Tos_dma;
+    if (reqPin->channelId == 3 || reqPin->channelId == 7)
+        eru_service = IfxSrc_Tos_cpu0;
+
+    if (reqPin->channelId == 0 || reqPin->channelId == 4)
+        eru_priority = ISR_PRIORITY_ERU_CH04;
+    if (reqPin->channelId == 1 || reqPin->channelId == 5)
+        eru_priority = ISR_PRIORITY_ERU_CH15;
+    if (reqPin->channelId == 2 || reqPin->channelId == 6)
+        eru_priority = ISR_PRIORITY_ERU_CH26;
+    if (reqPin->channelId == 3 || reqPin->channelId == 7)
+        eru_priority = ISR_PRIORITY_ERU_CH37;
 
     IfxSrc_init(src, eru_service, eru_priority);
     IfxSrc_enable(src);

@@ -7,6 +7,7 @@
 
 #include "tjrc_systemInit.h"
 
+uint8_t sdmmc_detected_flag = 0;
 /**
  * @brief 一次性初始化所有片上外设（均带有调试信息输出）
  *
@@ -61,6 +62,7 @@ void tjrc_setPeripherals(void)
     /* 检测TF卡，若成功则亮起白灯，且初始化文件系统，读取配置文件 */
     if(!tjrc_setSdmmc())
     {
+        sdmmc_detected_flag = 1;
         IfxPort_setPinLow(SDMMC_LED);
         tjrc_setFat32();
     }

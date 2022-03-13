@@ -357,6 +357,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/tjrc_libraries/tjrc_perpherals/inc}&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/Libraries/tjrc_libraries/tjrc_threads}&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/USER}&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/USER/isr}&quot;"/>
@@ -400,6 +402,22 @@
                         </toolChain>
                         					
                     </folderInfo>
+                    					
+                    <fileInfo id="com.infineon.aurix.buildsystem.managed.configuration.binary.157769496.2059783328" name="Cpu0_Main.c" rcbsApplicability="disable" resourcePath="USER/Cpu0_Main.c" toolsToInvoke="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.debug.705721940.187448783">
+                        						
+                        <tool id="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.debug.705721940.187448783" name="TASKING C/C++ Compiler" superClass="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.debug.705721940">
+                            							
+                            <option id="com.infineon.aurix.buildsystem.managed.c.compiler.tasking.optimization.level.debug.1011957045" name="Optimization level:" superClass="com.infineon.aurix.buildsystem.managed.c.compiler.tasking.optimization.level.debug" useByScannerDiscovery="false" value="com.infineon.aurix.buildsystem.managed.c.compiler.tasking.optimization.level.2" valueType="enumerated"/>
+                            							
+                            <option id="com.infineon.aurix.buildsystem.managed.c.compiler.tasking.optimization.tradeoff.1959257780" name="Trade-off between speed and size:" superClass="com.infineon.aurix.buildsystem.managed.c.compiler.tasking.optimization.tradeoff" useByScannerDiscovery="false" value="com.infineon.aurix.buildsystem.managed.c.compiler.tasking.optimization.tradeoff.4" valueType="enumerated"/>
+                            							
+                            <inputType id="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.input.cpp.1635755190" name="C++" superClass="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.input.cpp"/>
+                            							
+                            <inputType id="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.input.1940718940" name="C" superClass="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.input"/>
+                            						
+                        </tool>
+                        					
+                    </fileInfo>
                     				
                 </configuration>
                 			

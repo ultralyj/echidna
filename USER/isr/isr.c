@@ -22,8 +22,10 @@
  */
 IFX_INTERRUPT(QSPI0_RX_IRQHandler, 0, ISR_PRIORITY_QSPI0_RX)
 {
+    rt_interrupt_enter();
 	extern IfxQspi_SpiMaster MasterHandle;
     IfxQspi_SpiMaster_isrReceive(&MasterHandle);
+    rt_interrupt_leave();
 }
 
 /**
@@ -32,8 +34,10 @@ IFX_INTERRUPT(QSPI0_RX_IRQHandler, 0, ISR_PRIORITY_QSPI0_RX)
  */
 IFX_INTERRUPT(QSPI0_TX_IRQHandler, 0, ISR_PRIORITY_QSPI0_TX)
 {
+    rt_interrupt_enter();
 	extern IfxQspi_SpiMaster MasterHandle;
     IfxQspi_SpiMaster_isrReceive(&MasterHandle);
+    rt_interrupt_leave();
 }
 
 /**
@@ -42,8 +46,10 @@ IFX_INTERRUPT(QSPI0_TX_IRQHandler, 0, ISR_PRIORITY_QSPI0_TX)
  */
 IFX_INTERRUPT(QSPI0_ER_IRQHandler, 0, ISR_PRIORITY_QSPI0_ER)
 {
+    rt_interrupt_enter();
 	extern IfxQspi_SpiMaster MasterHandle;
     IfxQspi_SpiMaster_isrReceive(&MasterHandle);
+    rt_interrupt_leave();
 }
 
 
@@ -150,6 +156,8 @@ IFX_INTERRUPT(ERU_DMA_IRQHandler, 0, ISR_PRIORITY_ERU_DMA)
 
     tjrc_mt9v03x_dmaCallBack();
 
+    extern rt_sem_t camera_irq_sem;
+    rt_sem_release(camera_irq_sem);
     rt_exit_critical();
     rt_interrupt_leave();
 }
@@ -158,12 +166,10 @@ IFX_INTERRUPT(ERU_DMA_IRQHandler, 0, ISR_PRIORITY_ERU_DMA)
  * @brief ERU CHANNEL 3&7 中断响应函数，用于处理摄像头的场中断信号
  * 
  */
-IFX_INTERRUPT(ERU_CH37_IRQHandler, 0, ISR_PRIORITY_ERU(3))
+IFX_INTERRUPT(ERU_CH37_IRQHandler, 0, ISR_PRIORITY_ERU_CH37)
 {
     rt_interrupt_enter();
-    rt_enter_critical();
     tjrc_mt9v03x_vSync();
-    rt_exit_critical();
     rt_interrupt_leave();
 }
 
@@ -171,10 +177,14 @@ IFX_INTERRUPT(ERU_CH37_IRQHandler, 0, ISR_PRIORITY_ERU(3))
  * @brief ERU CHANNEL 1&5 中断响应函数，用于处理IMU中断信号输入
  *
  */
-IFX_INTERRUPT(ERU_CH15_IRQHandler, 0, ISR_PRIORITY_ERU(5))
+IFX_INTERRUPT(ERU_CH15_IRQHandler, 0, ISR_PRIORITY_ERU_CH15)
 {
+    rt_interrupt_enter();
+
     extern rt_sem_t imu_irq_sem;
     extern uint8_t balance_thread_flag;
     if(balance_thread_flag)
         rt_sem_release(imu_irq_sem);
+    rt_interrupt_leave();
+
 }

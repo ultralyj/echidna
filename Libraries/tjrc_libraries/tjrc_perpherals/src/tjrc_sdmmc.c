@@ -30,7 +30,7 @@ int32_t tjrc_setSdmmc(void)
     int32_t retry = 0;
 
     tjrc_setSpi();
-    tjrc_setSpiChannel(1000000);
+    tjrc_setSpiChannel(400000);
     /* 唤醒sdmmc 至少74个时钟（for stm32 @72MHz，当前波特率近似） */
     for(int i = 0; i<100;i++)
     {
@@ -125,7 +125,7 @@ int32_t tjrc_setSdmmc(void)
         }
     }
     /* 提高SPI通信速率 */
-    tjrc_setSpiChannel(5000000);
+    tjrc_setSpiChannel(10000000);
     if(sdmmc_type!=SDMMC_TYPE_ERR)
     {
         switch(sdmmc_type)
@@ -308,12 +308,16 @@ uint32_t tjrc_sdmmcSectorCnt(void)
 int32_t tjrc_sdmmcWaitReady(void)
 {
     uint32_t retry=0;
+    tjrc_spiTransmitByte(0xff);
+    tjrc_spiTransmitByte(0xff);
     do
     {
         if(tjrc_spiTransmitByte(0XFF)==0XFF)
             return 0;//OK
         retry++;
     }while(retry<0XFFFFFF);//等待
+    tjrc_spiTransmitByte(0xff);
+    tjrc_spiTransmitByte(0xff);
     return -1;
 }
 
@@ -325,7 +329,7 @@ int32_t tjrc_sdmmcWaitReady(void)
  */
 static int32_t tjrc_sdmmcResponse(uint8_t res)
 {
-    int32_t retry = 100000;
+    int32_t retry = 0xfffffff;
     while ((tjrc_spiTransmitByte(0XFF)!=res)&&retry>0)
     {
         retry--;
@@ -403,7 +407,7 @@ static uint8_t tjrc_sdmmcReceiveBlock(uint8_t* rxd,uint16_t len)
 static uint8_t tjrc_sdmmcTransmitBlock(uint8_t* txd, uint8_t cmd)
 {
     uint8_t res;
-    uint16_t retry;
+    uint32_t retry;
     /* 等待准备失效 */
     if(tjrc_sdmmcWaitReady())
         return 1;
@@ -414,20 +418,24 @@ static uint8_t tjrc_sdmmcTransmitBlock(uint8_t* txd, uint8_t cmd)
         {
             tjrc_spiTransmitByte(txd[t]);
         }
+      // tjrc_spiTransmit(txd,NULL_PTR,512);
         tjrc_spiTransmitByte(0xFF);
         tjrc_spiTransmitByte(0xFF);
 
         /* 接收响应 */
         res=tjrc_spiTransmitByte(0xFF);
         if((res&0x1F)!=0x05)
+        {
+            printf("[sd_txblock*]%x",cmd);
             return 2;
+        }
         retry = 0;
-        while(!tjrc_spiTransmitByte(0xff))
+        while(cmd==0XFE&&!tjrc_spiTransmitByte(0xff))
         {
             retry++;
-            if(retry>65534)        
+            if(retry>0xfffffff)
             {
-                return 1;          
+                return 1;
             }
         }
     }
