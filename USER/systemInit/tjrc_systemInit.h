@@ -13,8 +13,9 @@
 #define USER_TJRC_SYSTEMINIT_H_
 
 /* hardware：与底层片上外设配置相关代码 */
-#include "../Libraries/tjrc_libraries/tjrc_hardware_conf/tjrc_hardware.h"
-#include "../Libraries/tjrc_libraries/tjrc_perpherals/tjrc_peripherals.h"
+#include "tjrc_hardware.h"
+#include "tjrc_peripherals.h"
+#include "tjrc_algorithm.h"
 #include "ff.h"
 
 

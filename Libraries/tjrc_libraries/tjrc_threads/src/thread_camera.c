@@ -15,6 +15,8 @@
 rt_sem_t camera_irq_sem;
 rt_thread_t tid_camera;
 
+IfxCpu_syncEvent cameraCapture_event = 0;
+
 static void thread_camera_entry(void *param);
 
 /**
@@ -53,6 +55,8 @@ static void thread_camera_entry(void *param)
             tjrc_st7735_dispStr612(36,12,str_buff,RGB565_MAGENTA);
             /* 显示灰度图像 */
             tjrc_mt9v03x_displayImage_gray((uint8_t*)MT9V03X_image[0]);
+            /* 发送事件通知CPU1处理图像 */
+            IfxCpu_emitEvent(&cameraCapture_event);
             /* 非阻塞查询是否有按键信号量，若有则进入拍照状态 */
             if(rt_sem_take(key0_sem, RT_WAITING_NO) == RT_EOK)
             {
@@ -62,8 +66,9 @@ static void thread_camera_entry(void *param)
                 {
                     extern uint8_t MT9V03X_image_div4[MT9V03X_H*MT9V03X_W/4];
                     tjrc_st7735_drawRectangle(0,154,4,4,RGB565_RED);
-                    sprintf((char*)str_buff,"tjrc/c%05d.bmp",cnt);
+                    sprintf((char*)str_buff,"tjrc/b%03d/c%05d.bmp",tjrc_conf_inf.boot_cnt,cnt);
                     tjrc_fileIo_camera2bmp((char*)str_buff,MT9V03X_image_div4);
+                    tjrc_st7735_drawRectangle(0,154,4,4,RGB565_BLACK);
                 }
             }
             tjrc_mt9v03x_clearFinishFlag();

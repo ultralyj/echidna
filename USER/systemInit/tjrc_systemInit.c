@@ -19,6 +19,7 @@ static void tjrc_setUi(void);
  */
 float VCC_3V3,VCC_5V0,VCC_BAT;
 
+TJRC_CONFINO tjrc_conf_inf;
 uint8_t sdmmc_detected_flag = 0;
 
 /**
@@ -97,6 +98,7 @@ void tjrc_setFat32(void)
     DIR dir;
     FIL fil_conf;
     FRESULT ff_res;
+    char str[20];
     /* 强制挂载SDMMC */
     ff_res = f_mount(fs, "", 1);
     rt_kprintf("[ff]mount sdmmc(%d)\r\n",ff_res);
@@ -123,14 +125,28 @@ void tjrc_setFat32(void)
     {
         ff_res=f_open(&fil_conf,"tjrc/tjrc_conf.txt",FA_CREATE_NEW|FA_READ|FA_WRITE);
         rt_kprintf("[ff]configure file lost, create new: tjrc_conf.txt(%d)\r\n",ff_res);
-        f_printf(&fil_conf,"hello");
+        tjrc_fileIo_initConfFile(&fil_conf);
         ff_res = f_sync(&fil_conf);
         rt_kprintf("[ff]sync file: tjrc_conf.txt(%d)\r\n",ff_res);
     }
-    ff_res=f_open(&fil_conf,"tjrc/tjrc_conf.txt",FA_OPEN_EXISTING|FA_WRITE);
-    rt_kprintf("[ff]open file: tjrc_conf.txt(%d)\r\n",ff_res);
-    f_printf(&fil_conf,"yoho");
-    ff_res = f_close(&fil_conf);
+    else
+    {
+        /* 打开配置文件 */
+        ff_res=f_open(&fil_conf,"tjrc/tjrc_conf.txt",FA_OPEN_EXISTING|FA_WRITE|FA_READ);
+        rt_kprintf("[ff]open file: tjrc_conf.txt(%d)\r\n",ff_res);
+        /* 读取配置文件，并存储于tjrc_conf_inf */
+        tjrc_fileIo_getConfFile(&fil_conf,&tjrc_conf_inf);
+        /* 增加开机次数1次 */
+        tjrc_conf_inf.boot_cnt +=1;
+        /* 更新配置文件 */
+        tjrc_fileIo_updateConfFile(&fil_conf,&tjrc_conf_inf);
+        rt_kprintf("[tjrc]version:%d, boot_cnt:%d\r\n",tjrc_conf_inf.version,tjrc_conf_inf.boot_cnt);
+        ff_res = f_close(&fil_conf);
+        /* 创建新文件夹用于存储照片 */
+        sprintf(str,"tjrc/b%03d",tjrc_conf_inf.boot_cnt);
+        ff_res=f_mkdir(str);
+    }
+
     rt_kprintf("[ff]close file: tjrc_conf.txt(%d)\r\n",ff_res);
 
 }

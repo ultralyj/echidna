@@ -106,6 +106,44 @@ const uint8_t bmp_pannel_gray[]={
     0xfd,0xfd,0xfd,0x00,0xfe,0xfe,0xfe,0x00,0xff,0xff,0xff,0x00
 };
 
+const uint8_t tjrc_confFile_head[]="$TJRC,242,0,*";
+
+void tjrc_fileIo_initConfFile(FIL *fp)
+{
+    f_lseek(fp,0);
+    f_printf(fp,"%s",tjrc_confFile_head);
+}
+
+void tjrc_fileIo_getConfFile(FIL *fp, TJRC_CONFINO *conf)
+{
+    uint32_t fileSize = 0,rcnt=0;
+    uint8_t rxd[100];
+    fileSize = f_size(fp);
+    if(fileSize<100)
+    {
+        f_lseek(fp,0);
+        f_read(fp,rxd,fileSize,&rcnt);
+        rxd[fileSize]='\0';
+        sscanf((char*)rxd,"$TJRC,%d,%d",&(conf->version),&(conf->boot_cnt));
+        if(conf->version < 100)
+        {
+            tjrc_fileIo_initConfFile(fp);
+        }
+    }
+    else
+    {
+        rt_kprintf("[ff]file size exceed limit\r\n");
+    }
+}
+
+void tjrc_fileIo_updateConfFile(FIL *fp, TJRC_CONFINO *conf)
+{
+    uint8_t txd[50];
+    f_lseek(fp,0);
+    sprintf((char*)txd,"$TJRC,%d,%d,*",(conf->version),(conf->boot_cnt));
+    f_printf(fp,"%s",txd);
+}
+
 /**
  * @brief 将摄像头的图像转化为BMP文件存储与SD卡上
  * 

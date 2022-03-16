@@ -11,9 +11,8 @@
 
 #include <main.h>
 
-IFX_ALIGN(4) IfxCpu_syncEvent g_cpuSyncEvent = 0;
+IfxCpu_syncEvent g_cpuSyncEvent = 0;
 
-uint8_t sysInit_cpltFlag = 0;
 /**
  * @brief main函数
  * 
@@ -21,9 +20,6 @@ uint8_t sysInit_cpltFlag = 0;
  */
 int main(void)
 {
-    IfxCpu_emitEvent(&g_cpuSyncEvent);
-    IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
-
     extern rt_sem_t imu_irq_sem;
     extern rt_sem_t camera_irq_sem;
     imu_irq_sem = rt_sem_create("basem", 0, RT_IPC_FLAG_FIFO);
@@ -39,7 +35,10 @@ int main(void)
     tjrc_thread_balance_init();
     tjrc_thread_camera_init();
 
-    sysInit_cpltFlag = 1;
+    IfxCpu_emitEvent(&g_cpuSyncEvent);
+    IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
+
+
     /* 主循环 */
     while(1)
     {

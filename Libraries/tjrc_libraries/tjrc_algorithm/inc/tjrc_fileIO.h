@@ -14,6 +14,17 @@
 
 
 #include "ff.h"
+#include "string.h"
+
+typedef struct
+{
+    int32_t version;
+    int32_t boot_cnt;
+}TJRC_CONFINO;
+
+void tjrc_fileIo_initConfFile(FIL *fp);
+void tjrc_fileIo_getConfFile(FIL *fp, TJRC_CONFINO *conf);
+void tjrc_fileIo_updateConfFile(FIL *fp, TJRC_CONFINO *conf);
 
 void tjrc_fileIo_camera2bmp(char* path, uint8_t *image);
 

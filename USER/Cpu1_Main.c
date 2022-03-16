@@ -10,31 +10,27 @@
  */
 
 #include "main.h"
-#include "headfile.h"
-#pragma section all "cpu1_dsram"
 
+extern IfxCpu_syncEvent g_cpuSyncEvent;
+extern IfxCpu_syncEvent cameraCapture_event;
 
 void core1_main(void)
 {
-	disableInterrupts();
+    enableInterrupts();
 	/* 发送内核同步信号 */
 	IfxCpu_emitEvent(&g_cpuSyncEvent);
+	/* 等待内核同步（即CPU0的所有初始化完成） */
 	IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
 	/* 禁用看门狗 */
     IfxScuWdt_disableCpuWatchdog(IfxScuWdt_getCpuWatchdogPassword());
 
-    enableInterrupts();
-    /* 等待所有外设初始化完成 */
-    extern uint8_t sysInit_cpltFlag;
-    while(!sysInit_cpltFlag);
+    printf("[cpu1] turn to run\r\n");
     while (TRUE)
     {
-
-        printf("[cpu1] ok\r\n");
-        while(1);
+        IfxCpu_emitEvent(&cameraCapture_event);
+        IfxCpu_waitEvent(&cameraCapture_event, 0xFFFF);
+        cameraCapture_event = 0;
+       // printf("!");
     }
 }
 
-
-
-#pragma section all restore
