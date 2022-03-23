@@ -28,6 +28,7 @@ void tjrc_thread_life_init(void)
     {
         rtt_res = rt_thread_startup(tid_life);
         rt_kprintf("[rt-thread]create and startup thread: life(%d)\r\n",rtt_res);
+
     }
 }
 

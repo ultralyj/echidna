@@ -41,6 +41,8 @@ void tjrc_setHardware(void)
     tjrc_setGtmAtom_pwm(SERVO_GTM_ATOM_CHANNEL, 50);
     /* 初始化i2c接口 */
     tjrc_setIic();
+    /* asclin1 */
+    tjrc_setAsclin1_uart();
     /* 初始化模拟引脚 */
     tjrc_setVadc_pin(ADC_3V3_Pin);
     tjrc_setVadc_pin(ADC_5V0_Pin);

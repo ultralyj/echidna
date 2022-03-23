@@ -123,6 +123,50 @@ IFX_INTERRUPT(uart0_er_isr, 0, UART0_ER_INT_PRIO)
 	rt_interrupt_leave();   
 }
 
+/**
+ * @brief ASCLIN1 TX 中断响应函数
+ *
+ */
+IFX_INTERRUPT(ASCLIN1_TX_IRQHandler, 0, ISR_PRIORITY_ASCLIN1_TX)
+{
+    extern IfxAsclin_Asc asclin1_Handler;
+    rt_interrupt_enter();
+
+    enableInterrupts();
+    IfxAsclin_Asc_isrTransmit(&asclin1_Handler);
+
+    rt_interrupt_leave();
+}
+
+/**
+ * @brief ASCLIN1 RX 中断响应函数
+ *
+ */
+IFX_INTERRUPT(ASCLIN1_RX_IRQHandler, 0, ISR_PRIORITY_ASCLIN1_RX)
+{
+    extern IfxAsclin_Asc asclin1_Handler;
+    rt_interrupt_enter();
+
+    enableInterrupts();
+    IfxAsclin_Asc_isrReceive(&asclin1_Handler);
+    rt_interrupt_leave();
+}
+
+/**
+ * @brief ASCLIN1 ER 中断响应函数
+ *
+ */
+IFX_INTERRUPT(ASCLIN1_ER_IRQHandler, 0, ISR_PRIORITY_ASCLIN1_ER)
+{
+    extern IfxAsclin_Asc asclin1_Handler;
+    rt_interrupt_enter();
+
+    enableInterrupts();
+    IfxAsclin_Asc_isrError(&asclin1_Handler);
+
+    rt_interrupt_leave();
+}
+
 
 /**
  * @brief ASCLIN3 TX 中断响应函数

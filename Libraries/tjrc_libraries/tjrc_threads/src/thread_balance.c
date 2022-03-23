@@ -85,6 +85,7 @@ static void Run_entry(void *parameter)
  */
 static void balance_entry(void *parameter)
 {
+    extern float Angle_zero;
     static int32_t motor_enable;
     /* 速度环分频变量：1/20，后轮驱动分频：1/5，转向分频：1/2 */
     static uint8_t speedLoop_cnt = 0, drive_cnt = 0, turn_cnt = 0;
@@ -132,7 +133,10 @@ static void balance_entry(void *parameter)
                         speedLoop_cnt = 0;
                         b_flyWheel_speed = tjrc_flyWheel_getSpeed();
                         b_angle_delta = tjrc_pid_speedLoop(b_flyWheel_speed);
-                        printf("%f,%f\r\n",b_flyWheel_speed,b_angle_kalman);
+                        uint8_t str[30];
+                        sprintf(str,"%f,%f,%f\n",b_flyWheel_speed,b_angle_kalman,Angle_zero);
+                        tjrc_asclin1_sendStr(str);
+                        printf("%s",str);
                     }
                     speedLoop_cnt++;
                 }

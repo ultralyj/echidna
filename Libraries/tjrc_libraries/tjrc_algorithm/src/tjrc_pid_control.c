@@ -55,10 +55,10 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot)
  * @brief 速度环PID参数
  * 
  */
-float V_S_Kp = -0.0000055;
-float V_S_Ki = 0.025;
-float V_S_Kd = 2.8;
-const float V_S_Integral_Max = 0.01;
+double V_S_Kp = -0.000004;
+double V_S_Ki = 0.01;
+double V_S_Kd = 2.5;
+const double V_S_Integral_Max = 0.01;
 
 /**
  * @brief 串联的速度环，增量式PID控制，平滑到20个平滑周期
@@ -67,15 +67,15 @@ const float V_S_Integral_Max = 0.01;
  */
 float tjrc_pid_speedLoop(float _V_S_Bias)
 {
-    static float V_S_Bias = 0, V_S_Last = 0; // 1400,1200,m:12000
-    static float Angle_New = 0, Angle_Diff = 0;
+    static double V_S_Bias = 0, V_S_Last = 0; // 1400,1200,m:12000
+    static double Angle_New = 0, Angle_Diff = 0;
     
     /* 存储微分部分与积分部分的中间变量 */
-    float V_S_Diff = 0, V_S_Integral = 0;
-    float Angle_Diff_Last = 0, Angle_Old = 0;
+    double V_S_Diff = 0, V_S_Integral = 0;
+    double Angle_Diff_Last = 0, Angle_Old = 0;
 
     /* 获取编码器数值 */
-    V_S_Last = V_S_Bias;
+    V_S_Last = (double)V_S_Bias;
     V_S_Bias = _V_S_Bias;
 
     /* 中间变量数值更新 */
@@ -83,7 +83,7 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
     Angle_Old = Angle_New;
 
     /* 返回串级角度 */
-    Angle_New = (float)(V_S_Bias * V_S_Kp);
+    Angle_New = (double)(V_S_Bias * V_S_Kp);
 
     /* 目标角度变化值 */
     Angle_Diff = Angle_New - Angle_Old; 
@@ -92,7 +92,7 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
     V_S_Diff = (Angle_Diff - Angle_Diff_Last) * V_S_Kd;
     /* I:积分 */
     if (f_Abs(V_S_Bias) > 0)
-        V_S_Integral = ((float)Angle_New) * V_S_Ki;
+        V_S_Integral = ((double)Angle_New) * V_S_Ki;
 
     /* 积分限幅 */
     V_S_Integral = float_Constrain(V_S_Integral, -V_S_Integral_Max, V_S_Integral_Max);
@@ -100,7 +100,7 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
     //    V_S_Diff = 0;//不使用微分
 
     /* 结果加和并且进行平滑处理 */
-    float Angle_delta = (Angle_Diff + V_S_Diff + V_S_Integral) / 20;
+    float Angle_delta = (double)(Angle_Diff + V_S_Diff + V_S_Integral) / 20.0;
     return Angle_delta;
 }
 
@@ -186,7 +186,7 @@ float Turn_out(void)
     return Turn_delta;
 }
 
-float enc0_fade_coe = 0.4f;
+float enc0_fade_coe = 0.5f;
 /**
  * @brief 通过编码器0(GPT12-T2)，获取动量轮的速度信息
  * 
