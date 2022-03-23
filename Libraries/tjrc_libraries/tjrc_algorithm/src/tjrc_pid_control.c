@@ -11,11 +11,7 @@
 
 #include <tjrc_pid_control.h>
 
-static float tjrc_flyWheel_getSpeed(void);
-static float tjrc_drive_getSpeed(void);
-
-
-float Angle_zero = 0.04;  //平衡角度
+float Angle_zero = -0.15f;  //平衡角度
 
 /*******************直立环***********************************/
 
@@ -23,10 +19,10 @@ float Angle_zero = 0.04;  //平衡角度
  * @brief 直立环PID参数
  * 
  */
-float angle_kp = 200000;
-float angle_kd = 6000;
+float angle_kp = 250000;
+float angle_kd = 8000;
 float angle_ki = 1500;
-const float Angle_Integral_Max = 0.4;
+const float Angle_Integral_Max = 0.5;
 
 /**
  * @brief 直接法PID控制直立环
@@ -61,15 +57,15 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot)
  */
 float V_S_Kp = -0.0000055;
 float V_S_Ki = 0.025;
-float V_S_Kd = 2.5;
-const float V_S_Integral_Max = 0.008;
+float V_S_Kd = 2.8;
+const float V_S_Integral_Max = 0.01;
 
 /**
  * @brief 串联的速度环，增量式PID控制，平滑到20个平滑周期
  *
  * @return float PID控制量输出
  */
-float tjrc_pid_speedLoop(void)
+float tjrc_pid_speedLoop(float _V_S_Bias)
 {
     static float V_S_Bias = 0, V_S_Last = 0; // 1400,1200,m:12000
     static float Angle_New = 0, Angle_Diff = 0;
@@ -80,7 +76,7 @@ float tjrc_pid_speedLoop(void)
 
     /* 获取编码器数值 */
     V_S_Last = V_S_Bias;
-    V_S_Bias = tjrc_flyWheel_getSpeed();
+    V_S_Bias = _V_S_Bias;
 
     /* 中间变量数值更新 */
     Angle_Diff_Last = Angle_Diff;
@@ -95,7 +91,7 @@ float tjrc_pid_speedLoop(void)
     /* D:微分 */
     V_S_Diff = (Angle_Diff - Angle_Diff_Last) * V_S_Kd;
     /* I:积分 */
-    if (f_Abs(V_S_Bias) > 400.0f)
+    if (f_Abs(V_S_Bias) > 0)
         V_S_Integral = ((float)Angle_New) * V_S_Ki;
 
     /* 积分限幅 */
@@ -131,13 +127,13 @@ const float Max_Dr_Integral = 2000;
  * 
  * @return int32_t PWM输出（-50~50）
  */
-int32_t tjrc_pid_drive(void)
+int32_t tjrc_pid_drive(float speed)
 {
     static float Dr_Bias = 0,last_Dr_Bias = 0;
     static int duty = 0, last_duty = 0;
     static float Dr_Integral = 0;
     /* 获取速度差值 */
-    Dr_Bias = target_speed - tjrc_drive_getSpeed();
+    Dr_Bias = target_speed - speed;
     /* 计算积分并限幅 */
     Dr_Integral += Dr_Bias;
     Dr_Integral = float_Constrain(Dr_Integral, -Max_Dr_Integral, Max_Dr_Integral);
@@ -190,17 +186,18 @@ float Turn_out(void)
     return Turn_delta;
 }
 
+float enc0_fade_coe = 0.4f;
 /**
  * @brief 通过编码器0(GPT12-T2)，获取动量轮的速度信息
  * 
  * @return float 动量轮转速
  */
-static float tjrc_flyWheel_getSpeed(void)
+float tjrc_flyWheel_getSpeed(void)
 {
     static float speed_enc0_last = 0;
     float speed_enc0;
     speed_enc0 = (float)tjrc_gpt12_getT2();
-    speed_enc0 = (0.8 * speed_enc0_last + 0.2 * speed_enc0);
+    speed_enc0 = ((1.0f-enc0_fade_coe) * speed_enc0_last + enc0_fade_coe * speed_enc0);
     speed_enc0_last = speed_enc0;
     return speed_enc0;
 }
@@ -210,7 +207,7 @@ static float tjrc_flyWheel_getSpeed(void)
  * 
  * @return float 驱动轮转速
  */
-static float tjrc_drive_getSpeed(void)
+float tjrc_drive_getSpeed(void)
 {
     static float speed_enc1_last = 0;
     float speed_enc1;

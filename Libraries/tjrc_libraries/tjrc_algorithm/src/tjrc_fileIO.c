@@ -157,14 +157,14 @@ void tjrc_fileIo_camera2bmp(char* path, uint8_t *image)
 
     uint32_t wcnt = 0;
     /* 图像部分一共要写入的字节数 */
-    const uint32_t bcnt = MT9V03X_W*MT9V03X_H/4, block_size = 1200;
+    const uint32_t bcnt = MT9V03X_W*MT9V03X_H, block_size = 600;
 
     rt_tick_t tcnt = rt_tick_get();
 
     /* 打开文件 */
     ff_res = f_open(&fil_bmp,path,FA_CREATE_NEW|FA_READ|FA_WRITE);
     /* 写入BMP文件头 */
-    f_write(&fil_bmp, bmp_header_60x40_gray,sizeof(bmp_header_60x40_gray),&wcnt);
+    f_write(&fil_bmp, bmp_header_120x80_gray,sizeof(bmp_header_120x80_gray),&wcnt);
     /* 写入调色板信息 */
     f_write(&fil_bmp, bmp_pannel_gray,sizeof(bmp_pannel_gray),&wcnt);
     ff_res = f_sync(&fil_bmp);

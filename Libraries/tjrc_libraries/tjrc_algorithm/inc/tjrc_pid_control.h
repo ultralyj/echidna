@@ -27,9 +27,11 @@ extern float V_S_Kp, V_S_Ki, V_S_Kd;
 
 /* PID控制函数 */
 int32_t tjrc_pid_balance(float angle_kalman, float angle_dot);
-float tjrc_pid_speedLoop(void);
-int32_t tjrc_pid_drive(void);
+float tjrc_pid_speedLoop(float _V_S_Bias);
+int32_t tjrc_pid_drive(float speed);
 
+float tjrc_flyWheel_getSpeed(void);
+float tjrc_drive_getSpeed(void);
 extern float target_speed;
 
 //----------------方向

@@ -15,6 +15,7 @@
 rt_sem_t camera_irq_sem;
 rt_thread_t tid_camera;
 
+extern TJRC_CONFINO tjrc_conf_inf;
 IfxCpu_syncEvent cameraCapture_event = 0;
 
 static void thread_camera_entry(void *param);
@@ -67,7 +68,7 @@ static void thread_camera_entry(void *param)
                     extern uint8_t MT9V03X_image_div4[MT9V03X_H*MT9V03X_W/4];
                     tjrc_st7735_drawRectangle(0,154,4,4,RGB565_RED);
                     sprintf((char*)str_buff,"tjrc/b%03d/c%05d.bmp",tjrc_conf_inf.boot_cnt,cnt);
-                    tjrc_fileIo_camera2bmp((char*)str_buff,MT9V03X_image_div4);
+                    tjrc_fileIo_camera2bmp((char*)str_buff,(uint8_t*)MT9V03X_image[0]);
                     tjrc_st7735_drawRectangle(0,154,4,4,RGB565_BLACK);
                 }
             }
