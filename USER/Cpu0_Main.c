@@ -35,14 +35,14 @@ int main(void)
     tjrc_thread_balance_init();
     tjrc_thread_camera_init();
 
+    /* 发送内核同步信号 */
     IfxCpu_emitEvent(&g_cpuSyncEvent);
     IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
-
 
     /* 主循环 */
     while(1)
     {
-        rt_thread_mdelay(500);
+        rt_thread_mdelay(1000);
     }
 }
 

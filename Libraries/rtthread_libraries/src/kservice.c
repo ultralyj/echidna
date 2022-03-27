@@ -1153,7 +1153,7 @@ rt_device_t rt_console_set_device(const char *name)
 }
 RTM_EXPORT(rt_console_set_device);
 #endif
-#include "zf_uart.h"
+#include "tjrc_asclin.h"
 RT_WEAK void rt_hw_console_output(const char *str)
 {
     /*console output test version by crazt*/
@@ -1164,9 +1164,9 @@ RT_WEAK void rt_hw_console_output(const char *str)
     {
     if (*(str + i) == '\n')
     {
-    uart_putchar(UART_0, a);
+        tjrc_asclin0_transmit((uint8_t*)&a, 1);
     }
-    uart_putchar(UART_0, str[i]);
+        tjrc_asclin0_transmit((uint8_t*)&str[i], 1);
     }
 }
 RTM_EXPORT(rt_hw_console_output);

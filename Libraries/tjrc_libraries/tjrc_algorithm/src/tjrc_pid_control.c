@@ -10,6 +10,7 @@
  */
 
 #include <tjrc_pid_control.h>
+extern uint8_t steer_direct, run_direct;
 
 float Angle_zero = -0.15f;  //平衡角度
 

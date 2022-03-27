@@ -59,6 +59,7 @@
 #include <tjrc_hardware.h>
 #include <tjrc_peripherals.h>
 #include "rtthread.h"
+#include "common.h"
 /* hardware：与底层片上外设配置相关代码 */
 #include "tjrc_algorithm.h"
 #include "ff.h"
@@ -72,19 +73,7 @@
 /*------------------------------Type Definitions------------------------------*/
 /******************************************************************************/
 
-typedef struct
-{
-    float32 sysFreq;                /**< \brief Actual SPB frequency */
-    float32 cpuFreq;                /**< \brief Actual CPU frequency */
-    float32 pllFreq;                /**< \brief Actual PLL frequency */
-    float32 stmFreq;                /**< \brief Actual STM frequency */
-} AppInfo;
 
-/** \brief Application information */
-typedef struct
-{
-    AppInfo info;                               /**< \brief Info object */
-} App_Cpu0;
 
 /******************************************************************************/
 /*------------------------------Global variables------------------------------*/

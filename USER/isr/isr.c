@@ -9,10 +9,7 @@
  * 
  */
 
-#include <tjrc_hardware.h>
-#include <tjrc_peripherals.h>
-#include "rtthread.h"
-#include "isr_config.h"
+
 #include "isr.h"
 
 
@@ -82,10 +79,11 @@ IFX_INTERRUPT(QSPI0_ER_IRQHandler, 0, ISR_PRIORITY_QSPI0_ER)
  * @brief ASCLIN0 TX 中断响应函数
  * 
  */
-IFX_INTERRUPT(uart0_tx_isr, 0, UART0_TX_INT_PRIO)
+IFX_INTERRUPT(ASCLIN0_TX_IRQHandler, 0, ISR_PRIORITY_ASCLIN0_TX)
 {
+    extern IfxAsclin_Asc asclin0_Handler;
 	rt_interrupt_enter();  
-    IfxAsclin_Asc_isrTransmit(&uart0_handle);
+    IfxAsclin_Asc_isrTransmit(&asclin0_Handler);
 	rt_interrupt_leave();   
 }
 
@@ -94,16 +92,16 @@ IFX_INTERRUPT(uart0_tx_isr, 0, UART0_TX_INT_PRIO)
  * @brief ASCLIN0 RX 中断响应函数
  * 
  */
-IFX_INTERRUPT(uart0_rx_isr, 0, UART0_RX_INT_PRIO)
+IFX_INTERRUPT(ASCLIN0_RX_IRQHandler, 0, ISR_PRIORITY_ASCLIN0_RX)
 {
 	rt_interrupt_enter();   
-	
+    extern IfxAsclin_Asc asclin0_Handler;
     extern rt_mailbox_t uart_mb;
-	uint8 dat;
+	uint8_t rx;
 	enableInterrupts();
-    IfxAsclin_Asc_isrReceive(&uart0_handle);
-    uart_getchar(DEBUG_UART, &dat);
-    rt_mb_send(uart_mb, dat);           
+    IfxAsclin_Asc_isrReceive(&asclin0_Handler);
+    tjrc_asclin0_receive(&rx);
+    rt_mb_send(uart_mb, rx);
 	
 	rt_interrupt_leave();   
 }
@@ -113,12 +111,13 @@ IFX_INTERRUPT(uart0_rx_isr, 0, UART0_RX_INT_PRIO)
  * @brief ASCLIN0 ER 中断响应函数
  * 
  */
-IFX_INTERRUPT(uart0_er_isr, 0, UART0_ER_INT_PRIO)
+IFX_INTERRUPT(ASCLIN0_ER_IRQHandler, 0, ISR_PRIORITY_ASCLIN0_ER)
 {
+    extern IfxAsclin_Asc asclin0_Handler;
 	rt_interrupt_enter();  
 	
 	enableInterrupts();
-    IfxAsclin_Asc_isrError(&uart0_handle);
+    IfxAsclin_Asc_isrError(&asclin0_Handler);
 	
 	rt_interrupt_leave();   
 }
@@ -149,6 +148,7 @@ IFX_INTERRUPT(ASCLIN1_RX_IRQHandler, 0, ISR_PRIORITY_ASCLIN1_RX)
 
     enableInterrupts();
     IfxAsclin_Asc_isrReceive(&asclin1_Handler);
+    tjrc_wireless_recCallBack();
     rt_interrupt_leave();
 }
 

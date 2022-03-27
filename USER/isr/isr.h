@@ -12,8 +12,11 @@
 #ifndef _isr_h
 #define _isr_h
 
-#include "tjrc_hardware.h"
-#include "headfile.h"
+#include <tjrc_hardware.h>
+#include <tjrc_peripherals.h>
+#include "tjrc_algorithm.h"
+#include "rtthread.h"
+#include "isr_config.h"
 
 #endif
 

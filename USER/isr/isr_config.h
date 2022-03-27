@@ -17,12 +17,6 @@
  */
 
 
-
-#define	UART0_INT_SERVICE       IfxSrc_Tos_cpu0
-#define UART0_TX_INT_PRIO       70
-#define UART0_RX_INT_PRIO       71
-#define UART0_ER_INT_PRIO       72
-
 #define ISR_PRIORITY_DMA_CH1    93
 #define ISR_PRIORITY_DMA_CH2    94
 

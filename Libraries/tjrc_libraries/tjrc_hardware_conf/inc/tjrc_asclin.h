@@ -26,7 +26,11 @@ void tjrc_setAsclin3_uart(void);
 void tjrc_asclin0_transmit(uint8_t *buff, uint32_t len);
 void tjrc_asclin1_transmit(uint8_t *buff, uint32_t len);
 void tjrc_asclin3_transmit(uint8_t *buff, uint32_t len);
+void tjrc_asclin0_sendStr(uint8_t *buff);
 void tjrc_asclin1_sendStr(uint8_t *buff);
+
+uint8_t tjrc_asclin0_receive(uint8_t *resDat);
+uint8_t tjrc_asclin1_receive(uint8_t *resDat);
 uint8_t tjrc_asclin3_receive(uint8_t *resDat);
 
 #endif /* LIBRARIES_TJRC_LIBRARIES_TJRC_HARDWARE_CONF_TJRC_ASCLIN_H_ */

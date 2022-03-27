@@ -16,6 +16,7 @@ IfxQspi_SpiMaster_Channel qspi0_masterChannel_handler;
 IfxQspi_SpiMaster_Pins qspi0_set_pins;
 IfxQspi_SpiMaster_Output qspi0_cs_pin;
 
+uint8_t qspi0_buffer[300];
 /**
  * @brief 初始化QSPI0接口
  * 
@@ -47,7 +48,8 @@ int32_t tjrc_setSpi(void)
     /* 配置SPI为主机；传输速率和CPU核心 */
     MasterConfig.base.mode = SpiIf_Mode_master;
     MasterConfig.base.maximumBaudrate = (float)SPI0_BUAD;
-
+    MasterConfig.base.buffer = qspi0_buffer;
+    MasterConfig.base.bufferSize = 256;
     MasterConfig.base.rxPriority = ISR_PRIORITY_DMA_CH1;
     MasterConfig.base.txPriority = ISR_PRIORITY_DMA_CH2;
     MasterConfig.base.erPriority = ISR_PRIORITY_QSPI0_ER;

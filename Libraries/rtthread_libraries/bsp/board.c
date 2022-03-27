@@ -1,14 +1,16 @@
-
-#include <rtconfig.h>
-#include "IfxCpu.h"
-#include "IfxCpu_reg.h"
-//#include "Bsp.h"
-#include "Stm/Timer/IfxStm_Timer.h"
-#include "IfxStm.h"
-#include "cpuport.h"
-#include "zf_uart.h"
-#include <rthw.h>
-#include <rtthread.h>
+/**
+ * @file board.c
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 板级支持包（BSP）（Board Support Package）
+ * 是构建嵌入式操作系统所需的引导程序(Bootload)、内核(Kernel)、
+ * 根文件系统(Rootfs)和工具链(Toolchain) 提供完整的软件资源包
+ * @version 0.1
+ * @date 2022-03-27
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
+#include "board.h"
 
 #pragma section all "cpu0_dsram"
 
@@ -20,9 +22,22 @@
 static sint32 osticks = 0;
 static IfxStm_CompareConfig g_STM0Conf;
 
-//finsh������մ������ݣ���ͨ���ڴ����ж��ڷ����ʼ���finsh�߳̽����ʼ����л�ȡ��
+//finsh组件接收串口数据，是通过在串口中断内发送邮件，finsh线程接收邮件进行获取的
 rt_mailbox_t uart_mb;
 
+/**
+ * @brief 初始化调试用串口
+ * 
+ */
+void rt_hw_usart_init(void)
+{
+    tjrc_setAsclin0_uart();
+}
+
+/**
+ * @brief 初始化系统定时器
+ * 
+ */
 void rt_hw_systick_init(void)
 {
     osticks = IfxStm_getTicksFromMicroseconds(BSP_DEFAULT_TIMER, 1000000 / RT_TICK_PER_SECOND);
@@ -38,6 +53,10 @@ void rt_hw_systick_init(void)
     IfxStm_setSuspendMode(IfxStm_getAddress((IfxStm_Index)TRICORE_CPU_ID), IfxStm_SuspendMode_hard);
 }
 
+/**
+ * @brief 系统定时器中断
+ * 
+ */
 IFX_INTERRUPT(system_tick_handler, 0, SYSTICK_PRIO)
 {
     /* enter interrupt */
@@ -72,10 +91,13 @@ RT_WEAK void *rt_heap_end_get(void)
 }
 #endif
 
-
+/**
+ * @brief 系统预初始化
+ * 
+ */
 void rt_hw_board_init()
 {
-    get_clk();//��ȡʱ��Ƶ��  ��ر���
+    get_clk();
 
     rt_hw_systick_init();
 
@@ -107,14 +129,14 @@ void rt_hw_board_init()
 
 void rt_hw_console_output(const char *str)
 {
-    uart_putstr(DEBUG_UART, str);
+    tjrc_asclin0_sendStr((uint8_t*)str);
 }
 
 
 char rt_hw_console_getchar(void)
 {
     uint32 dat;
-    //�ȴ��ʼ�
+    //等待邮件
     rt_mb_recv(uart_mb, &dat, RT_WAITING_FOREVER);
     //uart_getchar(DEBUG_UART, &dat);
     return (char)dat;

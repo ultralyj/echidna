@@ -69,10 +69,10 @@ static void Run_entry(void *parameter)
     {
         if (rt_sem_take(Run_sem, RT_WAITING_FOREVER) == RT_EOK)
         {
-            if (run_direct == 1)
-                target_speed += 100;
-            else
-                target_speed -= 100;
+//            if (run_direct == 1)
+//                target_speed += 100;
+//            else
+//                target_speed -= 100;
         }
     }
 }
@@ -136,7 +136,7 @@ static void balance_entry(void *parameter)
                         uint8_t str[30];
                         sprintf(str,"%f,%f,%f\n",b_flyWheel_speed,b_angle_kalman,Angle_zero);
                         tjrc_asclin1_sendStr(str);
-                        printf("%s",str);
+                        printf("%s\r\n",str);
                     }
                     speedLoop_cnt++;
                 }

@@ -49,9 +49,9 @@ void tjrc_setAsclin0_uart(void)
     ascConf.bitTiming.samplePointPosition = IfxAsclin_SamplePointPosition_8;
 
     /* 步骤3：配置中断的优先级和服务类型 */
-    ascConf.interrupt.txPriority = UART0_TX_INT_PRIO;
-    ascConf.interrupt.rxPriority = UART0_RX_INT_PRIO;
-    ascConf.interrupt.erPriority = UART0_ER_INT_PRIO;
+    ascConf.interrupt.txPriority = ISR_PRIORITY_ASCLIN0_TX;
+    ascConf.interrupt.rxPriority = ISR_PRIORITY_ASCLIN0_RX;
+    ascConf.interrupt.erPriority = ISR_PRIORITY_ASCLIN0_ER;
     ascConf.interrupt.typeOfService = IfxSrc_Tos_cpu0;
 
     /* 步骤4：关联输入输出引脚到串口控制器 */
@@ -187,6 +187,21 @@ void tjrc_asclin0_transmit(uint8_t *buff, uint32_t len)
 }
 
 /**
+ * @brief 串口0发送定长数组
+ * @param buff (uint8_t*)字符数组指针
+ * @return NONE
+ */
+void tjrc_asclin0_sendStr(uint8_t *buff)
+{
+    while (*buff)
+    {
+        Ifx_SizeT count = 1;
+        (void)IfxAsclin_Asc_write(&asclin0_Handler, buff, &count, TIME_INFINITE);
+        buff++;
+    }
+}
+
+/**
  * @brief 串口1发送字符串
  * @param buff (uint8_t*)字符串指针
  * @return NONE
@@ -234,8 +249,39 @@ void tjrc_asclin3_transmit(uint8_t *buff, uint32_t len)
     }
 }
 
+
 /**
- * @brief 串口3发送定长数组
+ * @brief 串口1接收1个字节数据
+ * @param buff (uint8_t*)接受的字符
+ * @return (uint8_t)成功读取：0 失败：1
+ */
+uint8_t tjrc_asclin0_receive(uint8_t *resDat)
+{
+    if (IfxAsclin_Asc_getReadCount(&asclin0_Handler) > 0)
+    {
+        *resDat = IfxAsclin_Asc_blockingRead(&asclin0_Handler);
+        return 1;
+    }
+    return 0;
+}
+
+/**
+ * @brief 串口1接收1个字节数据
+ * @param buff (uint8_t*)接受的字符
+ * @return (uint8_t)成功读取：0 失败：1
+ */
+uint8_t tjrc_asclin1_receive(uint8_t *resDat)
+{
+    if (IfxAsclin_Asc_getReadCount(&asclin1_Handler) > 0)
+    {
+        *resDat = IfxAsclin_Asc_blockingRead(&asclin1_Handler);
+        return 1;
+    }
+    return 0;
+}
+
+/**
+ * @brief 串口3接收1个字节数据
  * @param buff (uint8_t*)接受的字符
  * @return (uint8_t)成功读取：0 失败：1
  */
