@@ -134,7 +134,7 @@ static void balance_entry(void *parameter)
                         b_flyWheel_speed = tjrc_flyWheel_getSpeed();
                         b_angle_delta = tjrc_pid_speedLoop(b_flyWheel_speed);
                         uint8_t str[30];
-                        sprintf(str,"%f,%f,%f\n",b_flyWheel_speed,b_angle_kalman,Angle_zero);
+                        sprintf((char*)str,"%f,%f,%f\n",b_flyWheel_speed,b_angle_kalman,Angle_zero);
                         tjrc_asclin1_sendStr(str);
                         printf("%s\r\n",str);
                     }
