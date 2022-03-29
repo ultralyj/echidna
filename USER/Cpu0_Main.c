@@ -32,7 +32,7 @@ int main(void)
     /* 开启各个线程 */
     tjrc_thread_life_init();
     tjrc_thread_key_init();
-    tjrc_thread_balance_init();
+//    tjrc_thread_balance_init();
     tjrc_thread_camera_init();
 
     /* 发送内核同步信号 */

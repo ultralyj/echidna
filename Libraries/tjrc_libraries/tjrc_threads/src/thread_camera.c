@@ -11,6 +11,7 @@
 
 
 #include "tjrc_threads.h"
+#include "tjrc_imageProc.h"
 
 rt_sem_t camera_irq_sem;
 rt_thread_t tid_camera;
@@ -19,6 +20,7 @@ extern TJRC_CONFINO tjrc_conf_inf;
 IfxCpu_syncEvent cameraCapture_event = 0;
 
 static void thread_camera_entry(void *param);
+extern tjrc_image_info tjrc_imageProc_ctr;
 
 /**
  * @brief 初始化摄像头线程
@@ -56,6 +58,7 @@ static void thread_camera_entry(void *param)
             tjrc_st7735_dispStr612(36,12,str_buff,RGB565_MAGENTA);
             /* 显示灰度图像 */
             tjrc_mt9v03x_displayImage_gray((uint8_t*)MT9V03X_image[0]);
+            tjrc_imageProcess((uint8_t*)MT9V03X_image[0],&tjrc_imageProc_ctr);
             /* 发送事件通知CPU1处理图像 */
             IfxCpu_emitEvent(&cameraCapture_event);
             /* 非阻塞查询是否有按键信号量，若有则进入拍照状态 */

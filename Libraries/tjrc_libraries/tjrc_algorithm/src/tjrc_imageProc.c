@@ -13,12 +13,12 @@
 
 
 #include "tjrc_imageProc.h"
-#include "common.h"
+
 #include "tjrc_imageProc_value.h"
   //声明全局变量-------------------------------------------
   //  图像
   //      图像预处理
-uint8_t threshold;                  //二值化阈值
+//uint8_t threshold;                  //二值化阈值
 uint8_t mt9v03x_image[MT9V03X_H][MT9V03X_W];
 uint8_t image[MT9V03X_H][MT9V03X_W];        //使用二维指针image代替信息图像，便于后期二值化图像和深度图像的转换
 uint8_t binimage_flag = 1;          //二值化标志，默认没有二值化
@@ -50,18 +50,18 @@ float line_right_top[2];
 float line_right_bottom[2];
 
 //拐点标志 #全局 flag 使用
-bool dot_left_bottom_l = 0;   //左下拐点，趋势左
-bool dot_left_bottom_r = 0;   //左下拐点，趋势右
-bool dot_left_top_l = 0;      //左上拐点，趋势左
-bool dot_left_top_r = 0;      //左上拐点，趋势右
-bool dot_right_bottom_l = 0;  //右下拐点，趋势左
-bool dot_right_bottom_r = 0;  //右下拐点，趋势右
-bool dot_right_top_l = 0;     //右上拐点，趋势左
-bool dot_right_top_r = 0;     //右上拐点，趋势右
+uint8_t dot_left_bottom_l = 0;   //左下拐点，趋势左
+uint8_t dot_left_bottom_r = 0;   //左下拐点，趋势右
+uint8_t dot_left_top_l = 0;      //左上拐点，趋势左
+uint8_t dot_left_top_r = 0;      //左上拐点，趋势右
+uint8_t dot_right_bottom_l = 0;  //右下拐点，趋势左
+uint8_t dot_right_bottom_r = 0;  //右下拐点，趋势右
+uint8_t dot_right_top_l = 0;     //右上拐点，趋势左
+uint8_t dot_right_top_r = 0;     //右上拐点，趋势右
 
 //是否为直线标志 #全局 flag 使用
-bool is_line_left = 0;
-bool is_line_right = 0;
+uint8_t is_line_left = 0;
+uint8_t is_line_right = 0;
 
 //直线总体偏差 #全局 使用
 float dist_control = 180;//判断是否为直线的控制参数  #全局 控制 使用
@@ -109,7 +109,7 @@ int32_t x1, x2, x3, x4;
 
 
 
-const tjrc_image_info tjrc_imageProc_ctr = {
+tjrc_image_info tjrc_imageProc_ctr = {
 	//###控制参数列表
 	78,    //左边线行搜线开始点
 	78,    //右边线行搜线开始点
@@ -128,7 +128,7 @@ const tjrc_image_info tjrc_imageProc_ctr = {
 	180,   //判断是否为直线的控制参数  #全局 控制 使用
 
 	//###标志位参数列表
-	0,     //使能二值化标志位
+	1,     //使能二值化标志位
 	0,     //使能八邻域搜线标志位
 	0,     //使能拐点搜索标准位
 	0      //使能识别元素标志位
@@ -159,7 +159,7 @@ const tjrc_image_info tjrc_imageProc_ctr = {
   * @version	V1.0
   * @date		2022/3/27
   */
-void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
+void tjrc_imageProcess(uint8_t* image, tjrc_image_info* info)
 {
 	//变量相关
 	//  全局、外部变量--------------------------
@@ -184,15 +184,16 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
    //      获取图像二值化阈值和图像二值化
 	//get_deal_image();
 
+	rt_kprintf("[imProc]:image process start\r\n");
 	/* 获取gui传递参数 */
-	for (int32_t i = 0; i < LCDH; i++)
-	{
-		for (int32_t j = 0; j < LCDW; j++)
-		{
-			image[i][j] = imagein[i][j];
-			//printf("%d", image[i][j]);
-		}
-	}
+//	for (int32_t i = 0; i < LCDH; i++)
+//	{
+//		for (int32_t j = 0; j < LCDW; j++)
+//		{
+//			image[i][j] = imagein[i+j];
+//			rt_kprintf("%d", image[i][j]);
+//		}
+//	}
 
 	/* 获取gui传递参数 */
 	L_basic_row_start = tjrc_imageProc_ctr.L_basic_row_start;
@@ -233,10 +234,10 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 	dot_right_top_r = 0;     //右上拐点，趋势右
 
 	//直线斜率数据存放数组 //变量初始化
-	line_left_bottom[2] = { 0 };
-	line_left_top[2] = { 0 };
-	line_right_top[2] = { 0 };
-	line_right_bottom[2] = { 0 };
+//	line_left_bottom[2] = { 0,0 };
+//	line_left_top[2] = { 0,0 };
+//	line_right_top[2] = { 0,0 };
+//	line_right_bottom[2] = { 0,0 };
 
 	//变量初始化
 	is_line_left = 0;
@@ -258,12 +259,16 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 	if (tjrc_imageProc_ctr.enable_bin)
 	{
 		uint8_t threshold = 0;
+//		rt_kprintf("getting in bin");
 		//2574行之后有四种二值化方法，暂时没有在该代码中调用，在gui中可用
-		threshold = XLW_otsuThreshold(imagein, 120, 80);
+		threshold = XLW_otsuThreshold((uint8_t*)image[0], 120, 80);
+		rt_kprintf("thh:%d\r\n",XLW_otsuThreshold((uint8_t*)image[0], 120, 80));
+		rt_kprintf("threshold:%d\r\n",threshold);
 		//average_filter();
 		//threshold = OSTU_bin(Image_W,Image_H,mt9v03x_image);//获取动态阈值
 		//threshold = GetOSTUThreshold(image, 0, Image_H - 1, 0, Image_W - 1);
 		get_binImage(threshold);//获取二值化图像
+		rt_kprintf("[image_bin]:image bin success\r\n");
 	}
 	
 
@@ -331,7 +336,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 			{
 				uint8_t m3 = 0;
 				if (L_edge_count > effective_points)L_edge_count = effective_points;
-				else L_edge_count = L_edge_count;
+//				else L_edge_count = L_edge_count;
 				//直线顶点坐标(L_edge[0].col,L_edge[0].row),(L_edge[L_edge_count-1].col,L_edge[L_edge_count-1].row)
 				printf("\n直线顶点为：(%d,%d),(%d,%d)", L_edge[0].row, L_edge[0].col, L_edge[L_edge_count - 1].row, L_edge[L_edge_count - 1].col);
 				line_left_bottom[0] = (float)(L_edge[L_edge_count - 1].col - L_edge[0].col) / (float)(L_edge[L_edge_count - 1].row - L_edge[0].row);   //k
@@ -395,7 +400,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 			{
 				uint8_t m3 = 0;
 				if (L_edge_count > effective_points)L_edge_count = effective_points;
-				else L_edge_count = L_edge_count;
+//				else L_edge_count = L_edge_count;
 				//直线顶点坐标(L_edge[1].col,L_edge[1].row),(L_edge[L_edge_count-1].col,L_edge[L_edge_count-1].row)
 				printf("\n直线顶点为：(%d,%d),(%d,%d)", L_edge[1].row, L_edge[1].col, L_edge[L_edge_count - 1].row, L_edge[L_edge_count - 1].col);
 				line_left_top[0] = (float)(L_edge[L_edge_count - 1].col - L_edge[1].col) / (float)(L_edge[L_edge_count - 1].row - L_edge[1].row);   //k
@@ -460,7 +465,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 				//左下
 				uint8_t m3 = L_top_corner_start;
 				if (L_top_corner_start > effective_points)L_top_corner_start = effective_points;
-				else L_top_corner_start = L_top_corner_start;
+//				else L_top_corner_start = L_top_corner_start;
 				//直线顶点坐标(L_edge[0].col,L_edge[0].row),(L_edge[L_top_corner_start-1].col,L_edge[L_top_corner_start-1].row)
 				printf("\n直线顶点为：(%d,%d),(%d,%d)", L_edge[0].row, L_edge[0].col, L_edge[L_top_corner_start - 1].row, L_edge[L_top_corner_start - 1].col);
 				line_left_bottom[0] = (float)(L_edge[L_top_corner_start - 1].col - L_edge[0].col) / (float)(L_edge[L_top_corner_start - 1].row - L_edge[0].row);   //k
@@ -522,7 +527,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 				//左上
 				L_top_corner_start = m3;
 				if (L_edge_count - L_top_corner_start > effective_points)L_edge_count = L_top_corner_start + effective_points;
-				else L_edge_count = L_edge_count;
+//				else L_edge_count = L_edge_count;
 				//直线顶点坐标(L_edge[L_top_corner_start].col,L_edge[L_top_corner_start].row),(L_edge[L_edge_count-1].col,L_edge[L_edge_count-1].row)
 				line_left_top[0] = (float)(L_edge[L_edge_count - 1].col - L_edge[L_top_corner_start].col) / (float)(L_edge[L_edge_count - 1].row - L_edge[L_top_corner_start].row);   //k
 				line_left_top[1] = (float)(L_edge[L_top_corner_start].col - line_left_top[0] * L_edge[L_top_corner_start].row);  //b
@@ -704,7 +709,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 			if (!R_start_lost && !center_lost_flag_r)//只有右下边线情况
 			{
 				if (R_edge_count > effective_points)R_edge_count = effective_points;
-				else R_edge_count = R_edge_count;
+//				else R_edge_count = R_edge_count;
 				//直线顶点坐标(L_edge[0].col,L_edge[0].row),(L_edge[L_edge_count-1].col,L_edge[L_edge_count-1].row)
 				printf("\n直线顶点为：(%d,%d),(%d,%d)", R_edge[0].row, R_edge[0].col, R_edge[R_edge_count - 1].row, R_edge[R_edge_count - 1].col);
 				line_right_bottom[0] = (float)(R_edge[R_edge_count - 1].col - R_edge[0].col) / (float)(R_edge[R_edge_count - 1].row - R_edge[0].row);   //k
@@ -770,7 +775,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 			else if (R_start_lost)//只有右上边线情况
 			{
 				if (R_edge_count > effective_points)R_edge_count = effective_points;
-				else R_edge_count = R_edge_count;
+//				else R_edge_count = R_edge_count;
 				//直线顶点坐标(L_edge[1].col,L_edge[1].row),(L_edge[L_edge_count-1].col,L_edge[L_edge_count-1].row)
 				printf("\n直线顶点为：(%d,%d),(%d,%d)", R_edge[1].row, R_edge[1].col, R_edge[R_edge_count - 1].row, R_edge[R_edge_count - 1].col);
 				line_right_top[0] = (float)(R_edge[R_edge_count - 1].col - R_edge[1].col) / (float)(R_edge[R_edge_count - 1].row - R_edge[1].row);   //k
@@ -837,7 +842,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 				//右下
 				uint8_t m3 = R_top_corner_start;
 				if (R_top_corner_start > effective_points)R_top_corner_start = effective_points;
-				else R_top_corner_start = R_top_corner_start;
+//				else R_top_corner_start = R_top_corner_start;
 				//直线顶点坐标(L_edge[0].col,L_edge[0].row),(L_edge[L_top_corner_start-1].col,L_edge[L_top_corner_start-1].row)
 				line_right_bottom[0] = (float)(R_edge[R_top_corner_start - 1].col - R_edge[0].col) / (float)(R_edge[R_top_corner_start - 1].row - R_edge[0].row);   //k
 				line_right_bottom[1] = (float)(R_edge[0].col - line_right_bottom[0] * R_edge[0].row);  //b
@@ -896,7 +901,7 @@ void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info)
 				//右上
 				R_top_corner_start = m3;
 				if (R_edge_count - R_top_corner_start > effective_points)R_edge_count = R_top_corner_start + effective_points;
-				else R_edge_count = R_edge_count;
+//				else R_edge_count = R_edge_count;
 				//直线顶点坐标(L_edge[L_top_corner_start].col,L_edge[L_top_corner_start].row),(L_edge[L_edge_count-1].col,L_edge[L_edge_count-1].row)
 				line_right_top[0] = (float)(R_edge[R_edge_count - 1].col - R_edge[R_top_corner_start].col) / (float)(R_edge[R_edge_count - 1].row - R_edge[R_top_corner_start].row);   //k
 				line_right_top[1] = (float)(R_edge[R_top_corner_start].col - line_right_top[0] * R_edge[R_top_corner_start].row);  //b
@@ -1899,14 +1904,15 @@ int32_t edge_point_ornot(uint8_t row, uint8_t side)  //5和155需要调整
 *--------------------------------------------------------------------------*/
 uint8_t black_(uint8_t x)    //判断黑
 {
-	if (binimage_flag == 0)  //如果没有二值化，则通过阈值判断黑白
-	{
-		if (x < threshold)
-			return 1;
-		else if (x >= threshold)
-			return 0;
-	}
-	else if (binimage_flag == 1)
+//	if (binimage_flag == 0)  //如果没有二值化，则通过阈值判断黑白
+//	{
+//		if (x < threshold)
+//			return 1;
+//		else if (x >= threshold)
+//			return 0;
+//	}
+//	else
+    if (binimage_flag == 1)
 	{
 		if (x == 0)
 			return 1;
@@ -1918,14 +1924,15 @@ uint8_t black_(uint8_t x)    //判断黑
 
 uint8_t white_(uint8_t x)    //判断白
 {
-	if (binimage_flag == 0)
-	{
-		if (x < threshold)
-			return 0;
-		else if (x >= threshold)
-			return 1;
-	}
-	else if (binimage_flag == 1)
+//	if (binimage_flag == 0)
+//	{
+//		if (x < threshold)
+//			return 0;
+//		else if (x >= threshold)
+//			return 1;
+//	}
+//	else
+    if (binimage_flag == 1)
 	{
 		if (x == 1)
 			return 1;
@@ -2567,7 +2574,7 @@ float statistics(uint8_t mode)
  * @param row   (uint16_t)行数
  * @return (uint8_t)计算得出的阈值
  */
-uint8_t XLW_otsuThreshold(uint8_t image[MT9V03X_H][MT9V03X_W], uint16_t col, uint16_t row)
+uint8_t XLW_otsuThreshold(uint8_t* image, uint16_t col, uint16_t row)
 {
 	/* 定义灰度调整等级：128档 */
 #define GrayScale 128
@@ -2579,14 +2586,13 @@ uint8_t XLW_otsuThreshold(uint8_t image[MT9V03X_H][MT9V03X_W], uint16_t col, uin
 	uint16_t width = col;
 	uint16_t height = row;
 	uint32 i, j, pixelSum = width * height;
-	uint8_t threshold = 0;
-	uint8_t* data = image[0];
+	uint8_t threshold_in = 0;
+	uint8_t* data = &image;
 	for (i = 0; i < GrayScale; i++)
 	{
 		pixelCount[i] = 0;
 		pixelPro[i] = 0;
 	}
-
 	//统计灰度级中每个像素在整幅图像中的个数
 	for (i = 28; i < height; i += 2)
 	{
@@ -2595,7 +2601,6 @@ uint8_t XLW_otsuThreshold(uint8_t image[MT9V03X_H][MT9V03X_W], uint16_t col, uin
 			pixelCount[(int32_t)data[i * width + j] / 2]++; //将像素值作为计数数组的下标
 		}
 	}
-
 	//计算每个像素在整幅图像中的比例
 	float maxPro = 0.0;
 	for (i = 0; i < GrayScale; i++)
@@ -2632,16 +2637,17 @@ uint8_t XLW_otsuThreshold(uint8_t image[MT9V03X_H][MT9V03X_W], uint16_t col, uin
 		if (deltaTmp > deltaMax)
 		{
 			deltaMax = deltaTmp;
-			threshold = (uint8_t)i;
+			threshold_in = (uint8_t)i;
 		}
 	}
-	threshold -= 1;
-	if (threshold * 2 > th_max)
-		threshold = th_max / 2;
-	if (threshold * 2 < th_min)
-		threshold = th_min / 2;
-
-	return threshold * 2;
+	threshold_in -= 1;
+//	rt_kprintf("th:%d\r\n",threshold);
+	if (threshold_in * 2 > th_max)
+		threshold_in = th_max / 2;
+	if (threshold_in * 2 < th_min)
+		threshold_in = th_min / 2;
+	rt_kprintf("th:%d\r\n",threshold_in);
+	return threshold_in*2;
 }
 
 
@@ -2664,7 +2670,7 @@ uint8_t XLW_otsuThreshold(uint8_t image[MT9V03X_H][MT9V03X_W], uint16_t col, uin
   * @see      GetOSTU(Image_Use);//大津法阈值
   * @date     2019/6/25 星期二
   */
-int32_t GetOSTU(unsigned char tmImage[MT9V03X_H][MT9V03X_W])
+int32_t GetOSTU(uint8_t* tmImage)
 {
 	signed short i, j;
 	unsigned long Amount = 0;
@@ -2684,7 +2690,7 @@ int32_t GetOSTU(unsigned char tmImage[MT9V03X_H][MT9V03X_W])
 	{
 		for (i = 0; i < MT9V03X_W; i++)
 		{
-			HistoGram[tmImage[j][i]]++; //统计灰度级中每个像素在整幅图像中的个数
+			HistoGram[tmImage[i*MT9V03X_W+j]]++; //统计灰度级中每个像素在整幅图像中的个数
 		}
 	}
 
@@ -2992,7 +2998,7 @@ uint8_t* Get_01_Value(uint8_t image_in[MT9V03X_H][MT9V03X_W], uint8_t image_out[
 	}
 	else if (mode == 4)
 	{
-		Threshold = XLW_otsuThreshold(image_in, MT9V03X_H, MT9V03X_W);  //OTSU
+		Threshold = XLW_otsuThreshold((uint8_t*)image_in[0], MT9V03X_H, MT9V03X_W);  //OTSU
 		//return Threshold ;
 	}
 	/* 二值化 */

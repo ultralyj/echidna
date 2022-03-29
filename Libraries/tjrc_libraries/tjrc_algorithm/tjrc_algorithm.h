@@ -16,6 +16,7 @@
 #include "tjrc_kalmam.h"
 #include "Peripheral.h"
 #include "tjrc_fileIO.h"
+#include "tjrc_imageProc.h"
 
 
 

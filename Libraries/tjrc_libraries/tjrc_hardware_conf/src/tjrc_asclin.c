@@ -16,8 +16,8 @@
 /**
  * @brief 定义串口（uart）缓冲队列数组的大小
  */
-#define ASC_TX_BUFFER_SIZE 64
-#define ASC_RX_BUFFER_SIZE 64
+#define ASC_TX_BUFFER_SIZE 256
+#define ASC_RX_BUFFER_SIZE 256
 #define ASC1_BUFFER_SIZE 16
 #define ASC3_BUFFER_SIZE 16
 

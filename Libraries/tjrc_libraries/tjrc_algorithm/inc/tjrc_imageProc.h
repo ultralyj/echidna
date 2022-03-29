@@ -2,6 +2,8 @@
 #define CODE_NOSAYDIE_CAMERA_H_
 
 #include <stdint.h>
+//#include "tjrc_algorithm.h"
+//#include "tjrc_imageProc.h"
 //宏定义相关变量-------------------------------
 #define LCDW 120
 #define LCDH 80
@@ -88,6 +90,7 @@ void edge_truncation(uint8_t side);
 void FitStraightLine(int32_t start, int32_t end, uint8_t side);
 void git_gui_value(uint8_t value_in[30]);
 float statistics(uint8_t mode);
-void tjrc_imageProc(uint8_t imagein[LCDH][LCDW], tjrc_image_info* info);
-uint8_t XLW_otsuThreshold(uint8_t image[MT9V03X_H][MT9V03X_W], uint16_t col, uint16_t row);
+void tjrc_imageProcess(uint8_t* image, tjrc_image_info* info);
+uint8_t XLW_otsuThreshold(uint8_t* image, uint16_t col, uint16_t row);
+int32_t GetOSTU(uint8_t* tmImage);
 #endif /* CODE_NOSAYDIE_CAMERA_H_ */

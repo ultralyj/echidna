@@ -14,6 +14,7 @@
 #include "tjrc_algorithm.h"
 #include "tjrc_systemInit.h"
 
+
 void tjrc_thread_life_init(void);
 void tjrc_thread_key_init(void);
 void tjrc_thread_camera_init(void);
