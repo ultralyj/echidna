@@ -31,27 +31,29 @@ void tjrc_setHardware(void)
     /* 配置LED,按键和蜂鸣器的GPIO */
     tjrc_setLed_pin();
     tjrc_setKeys_pin();
-    //tjrc_setBeep_pin();
-    /* 配置CCU6，输出互补PWM */
-    tjrc_setCcu60_pwm();
+    tjrc_setBeep_pin();
     //tjrc_setCcu61_pwm();
     /* 配置gpt12，获取编码器数值 */
     tjrc_setGpt12_encoder();
     /* 配置gtm(atom)产生舵机控制信号 */
     tjrc_setGtmAtom_pwm(SERVO_GTM_ATOM_CHANNEL, 50);
+    tjrc_servo_setAngle(0);
     /* 初始化i2c接口 */
     tjrc_setIic();
     /* asclin1 */
     tjrc_setAsclin1_uart();
     /* 初始化模拟引脚 */
+    tjrc_setVadc_pin(ADC_2V5_Pin);
     tjrc_setVadc_pin(ADC_3V3_Pin);
     tjrc_setVadc_pin(ADC_5V0_Pin);
     tjrc_setVadc_pin(ADC_VBAT_Pin);
     /* 初步计算电压 */
-    VCC_3V3 = tjrc_vadc_getAnalog(ADC_3V3_Pin)* 3.33f * 2.0f / 4096;
-    VCC_5V0 = tjrc_vadc_getAnalog(ADC_5V0_Pin)* 3.33f * 2.0f / 4096;
-    VCC_BAT = tjrc_vadc_getAnalog(ADC_VBAT_Pin)* 3.33f * 4.0f / 4096;
+    uint16_t VREF_2V5 = tjrc_vadc_getAnalog(ADC_2V5_Pin);
+    VCC_3V3 = tjrc_vadc_getAnalog(ADC_3V3_Pin)* 2.5f * 2.0f / VREF_2V5;
+    VCC_5V0 = tjrc_vadc_getAnalog(ADC_5V0_Pin)* 2.5f * 2.0f / VREF_2V5;
+    VCC_BAT = tjrc_vadc_getAnalog(ADC_VBAT_Pin)* 2.5f * 4.0f / VREF_2V5;
     printf("[vadc]Monitoring voltage: VCC_3V3:%.3fV, VCC_5V:%.3fV, DC_IN:%.3fV\r\n",VCC_3V3,VCC_5V0,VCC_BAT);
+    rt_kprintf("______________________________________________________________________\r\n");
     /* 若电池电压正常，则亮绿灯 */
     if(VCC_BAT>7 &&VCC_BAT<8.4)
     {
@@ -65,10 +67,13 @@ void tjrc_setHardware(void)
  */
 void tjrc_setPeripherals(void)
 {
+    rt_kprintf("______________________________________________________________________\r\n");
     /* 初始化电机 */
     tjrc_setFlyWheelMotor();
+#if !IMU_BANNED
     /* 初始化IMU:ICM20602 */
     tjrc_setIcm20602();
+#endif
     /* 初始化屏幕 */
     tjrc_setSt7735();
     tjrc_setUi();
@@ -86,7 +91,7 @@ void tjrc_setPeripherals(void)
         IfxPort_setPinLow(SDMMC_LED);
         tjrc_setFat32();
     }
-
+    rt_kprintf("______________________________________________________________________\r\n");
 }
 
 /**

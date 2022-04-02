@@ -1,3 +1,6 @@
+
+
+
 /**
  * @file control.c
  * @author YYYDS team (Sangday)
@@ -12,7 +15,7 @@
 #include <tjrc_pid_control.h>
 extern uint8_t steer_direct, run_direct;
 
-float Angle_zero = -0.15f;  //平衡角度
+float Angle_zero = -0.08f;  //平衡角度
 
 /*******************直立环***********************************/
 
@@ -21,7 +24,7 @@ float Angle_zero = -0.15f;  //平衡角度
  * 
  */
 float angle_kp = 250000;
-float angle_kd = 8000;
+float angle_kd = 18000;
 float angle_ki = 1500;
 const float Angle_Integral_Max = 0.5;
 
@@ -56,9 +59,9 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot)
  * @brief 速度环PID参数
  * 
  */
-double V_S_Kp = -0.000004;
-double V_S_Ki = 0.01;
-double V_S_Kd = 2.5;
+double V_S_Kp = -0.0000033;
+double V_S_Ki = 0.015;
+double V_S_Kd = 1.0;
 const double V_S_Integral_Max = 0.01;
 
 /**
@@ -97,8 +100,8 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
 
     /* 积分限幅 */
     V_S_Integral = float_Constrain(V_S_Integral, -V_S_Integral_Max, V_S_Integral_Max);
-    //    V_S_Integral=0;  //不使用积分
-    //    V_S_Diff = 0;//不使用微分
+//        V_S_Integral=0;  //不使用积分
+//        V_S_Diff = 0;//不使用微分
 
     /* 结果加和并且进行平滑处理 */
     float Angle_delta = (double)(Angle_Diff + V_S_Diff + V_S_Integral) / 20.0;
@@ -118,9 +121,9 @@ float target_speed = 0;
  * @brief 后轮驱动PID参数
  * 
  */
-float Dr_kp = 0.02;
-float Dr_ki = 0.003;
-float Dr_kd = 0.01;
+float Dr_kp = 2;
+float Dr_ki = 0.3;
+float Dr_kd = 0.1;
 const float Max_Dr_Integral = 2000;
 
 /**
@@ -213,7 +216,7 @@ float tjrc_drive_getSpeed(void)
     static float speed_enc1_last = 0;
     float speed_enc1;
     speed_enc1 = (float)tjrc_gpt12_getT6();
-    speed_enc1 = (0.8 * speed_enc1_last + 0.2 * speed_enc1);
+    speed_enc1 = (0.5 * speed_enc1_last + 0.5 * speed_enc1);
     speed_enc1_last = speed_enc1;
     return speed_enc1;
 }

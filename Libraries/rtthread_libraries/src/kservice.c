@@ -1162,11 +1162,11 @@ RT_WEAK void rt_hw_console_output(const char *str)
     size = rt_strlen(str);
     for (i = 0; i < size; i++)
     {
-    if (*(str + i) == '\n')
-    {
-        tjrc_asclin0_transmit((uint8_t*)&a, 1);
-    }
-        tjrc_asclin0_transmit((uint8_t*)&str[i], 1);
+        if (*(str + i) == '\n')
+        {
+            tjrc_asclin0_transmit((uint8_t*)&a, 1);
+        }
+        tjrc_asclin0_transmit((uint8_t*)&(str[i]), 1);
     }
 }
 RTM_EXPORT(rt_hw_console_output);

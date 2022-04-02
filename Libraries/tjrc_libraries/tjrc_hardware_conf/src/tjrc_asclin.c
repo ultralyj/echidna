@@ -84,7 +84,7 @@ void tjrc_setAsclin0_uart(void)
 void tjrc_setAsclin1_uart(void)
 {
     float baudrate = 115200;
-    rt_kprintf("[asclin]set asclin1 as uart interface(br:%d tx:P15.0 rx:15.1)\r\n",baudrate);
+    rt_kprintf("[asclin]set asclin1 as uart interface(br:%d tx:P15.0 rx:15.1)\r\n",(int)baudrate);
     /* 步骤1：定义一个配置的结构体，并通过初始化拉取默认的配置到ascConf */
     static IfxAsclin_Asc_Config ascConf;
     IfxAsclin_Asc_initModuleConfig(&ascConf, &MODULE_ASCLIN1);
@@ -130,7 +130,7 @@ void tjrc_setAsclin1_uart(void)
 void tjrc_setAsclin3_uart(void)
 {
     float baudrate = 9600;
-    rt_kprintf("[asclin]set asclin3 as uart interface(br:%d tx:P15.6 rx:15.7)\r\n",baudrate);
+    rt_kprintf("[asclin]set asclin3 as uart interface(br:%d tx:P15.6 rx:15.7)\r\n",(int)baudrate);
     /* 步骤1：定义一个配置的结构体，并通过初始化拉取默认的配置到ascConf */
     static IfxAsclin_Asc_Config ascConf;
     IfxAsclin_Asc_initModuleConfig(&ascConf, &MODULE_ASCLIN3);

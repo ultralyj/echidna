@@ -17,8 +17,9 @@
 
 #include "IfxVadc_Adc.h"
 
-#define ADC_3V3_Pin 7
-#define ADC_5V0_Pin 6
+#define ADC_2V5_Pin 5
+#define ADC_3V3_Pin 6
+#define ADC_5V0_Pin 7
 #define ADC_VBAT_Pin 8
 
 void tjrc_setVadc_pin(uint8_t apinIndex);

@@ -32,12 +32,13 @@ int main(void)
     /* 开启各个线程 */
     tjrc_thread_life_init();
     tjrc_thread_key_init();
-//    tjrc_thread_balance_init();
-    tjrc_thread_camera_init();
-
+    tjrc_thread_balance_init();
+   // tjrc_thread_camera_init();
+    tjrc_thread_run_init();
     /* 发送内核同步信号 */
     IfxCpu_emitEvent(&g_cpuSyncEvent);
     IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
+
 
     /* 主循环 */
     while(1)

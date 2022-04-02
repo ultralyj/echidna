@@ -34,7 +34,9 @@ static void Run_entry(void *parameter);
 
 void tjrc_thread_balance_init(void)
 {
-
+#if IMU_BANNED
+    rt_kprintf("[WARNNING]IMU is banned!!\r\n");
+#else
     rt_err_t rtt_res;
     balance_tid = rt_thread_create("balance", balance_entry, RT_NULL, 1024, 3, 30);
     if (balance_tid != RT_NULL)
@@ -43,13 +45,13 @@ void tjrc_thread_balance_init(void)
         rt_kprintf("[rt-thread]create and startup thread: balance(%d)\r\n",rtt_res);
     }
     balance_thread_flag = 1;
+#endif
 }
 
 void tjrc_thread_run_init(void)
 {
 
     rt_err_t rtt_res;
-    uint32_t duty[3] = {50, 50, 50};
     Run_sem = rt_sem_create("Run_sem", 0, RT_IPC_FLAG_FIFO);
     Run_tid = rt_thread_create("run", Run_entry, RT_NULL, 512, 26, 30);
     if (Run_tid != RT_NULL)
@@ -57,22 +59,21 @@ void tjrc_thread_run_init(void)
         rtt_res = rt_thread_startup(Run_tid);
         rt_kprintf("[rt-thread]create and startup thread: run(%d)\r\n",rtt_res);
     }
-    tjrc_setCcu60_pwm();
-    tjrc_ccu60pwm_setDutyCycle(duty, 1);
-
 }
 
 
 static void Run_entry(void *parameter)
 {
+    extern float target_speed;
+    extern uint8_t run_direct;
     while (1)
     {
         if (rt_sem_take(Run_sem, RT_WAITING_FOREVER) == RT_EOK)
         {
-//            if (run_direct == 1)
-//                target_speed += 100;
-//            else
-//                target_speed -= 100;
+            if (run_direct == 1)
+                target_speed += 100;
+            else
+                target_speed -= 100;
         }
     }
 }
@@ -142,15 +143,15 @@ static void balance_entry(void *parameter)
                 }
 
                 /* 舵机方向（1/2） */
-//                if (turn_enable)
-//                {
-//                    if (turn_cnt == 2)
-//                    {
-//                        turn_cnt = 0;
-//                        b_turn_delta = Turn_out();
-//                    }
-//                    turn_cnt++;
-//                }
+                if (turn_enable)
+                {
+                    if (turn_cnt == 2)
+                    {
+                        turn_cnt = 0;
+                        b_turn_delta = Turn_out();
+                    }
+                    turn_cnt++;
+                }
                 /* 后轮驱动（1/5） */
                 if (drive_enable)
                 {
@@ -160,8 +161,7 @@ static void balance_entry(void *parameter)
                         b_drive_speed = tjrc_drive_getSpeed();
                         drive_pwmOut = tjrc_pid_drive(b_drive_speed);
                         /* 输入CCU60，输出互补PWM波 */
-                        dutyr[0] = (uint32_t)s32_AmpConstrain(0, 100, drive_pwmOut + 50);
-                        tjrc_ccu60pwm_setDutyCycle(dutyr, 3);
+                        tjrc_driveMotor_pwm(drive_pwmOut);
                     }
                     drive_cnt++;
                 }

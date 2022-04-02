@@ -20,7 +20,6 @@ extern TJRC_CONFINO tjrc_conf_inf;
 IfxCpu_syncEvent cameraCapture_event = 0;
 
 static void thread_camera_entry(void *param);
-extern tjrc_image_info tjrc_imageProc_ctr;
 
 /**
  * @brief 初始化摄像头线程
@@ -48,19 +47,30 @@ static void thread_camera_entry(void *param)
     extern rt_sem_t key0_sem;
     uint8_t str_buff[40];
     uint16_t cnt=0;
+    rt_tick_t timeStamp_start=0,timeStamp_end=0;
     while(1)
     {
         /* 等待摄像头采集完毕的信号量 */
         if(rt_sem_take(camera_irq_sem, RT_WAITING_FOREVER) == RT_EOK)
         {
             IfxPort_togglePin(CAMERA_LED);
-            sprintf((char*)str_buff,"cnt=%d   ",cnt++);
-            tjrc_st7735_dispStr612(36,12,str_buff,RGB565_MAGENTA);
+
             /* 显示灰度图像 */
-            tjrc_mt9v03x_displayImage_gray((uint8_t*)MT9V03X_image[0]);
-            tjrc_imageProcess((uint8_t*)MT9V03X_image[0],&tjrc_imageProc_ctr);
+            //tjrc_mt9v03x_displayImage_gray((uint8_t*)MT9V03X_image[0]);
+            //tjrc_mt9v03x_displayImage((uint8_t*)MT9V03X_image[0], 60);
+
             /* 发送事件通知CPU1处理图像 */
             IfxCpu_emitEvent(&cameraCapture_event);
+
+            /* 执行图像处理并计算耗时 */
+            timeStamp_start=rt_tick_get();
+            tjrc_imageProcess((uint8_t*)MT9V03X_image[0]);
+            timeStamp_end=rt_tick_get();
+
+            /* 数据显示 */
+            sprintf((char*)str_buff,"cnt=%d, t=%dms   ",cnt++,timeStamp_end-timeStamp_start);
+            tjrc_st7735_dispStr612(12,12,str_buff,RGB565_MAGENTA);
+
             /* 非阻塞查询是否有按键信号量，若有则进入拍照状态 */
             if(rt_sem_take(key0_sem, RT_WAITING_NO) == RT_EOK)
             {

@@ -15,4 +15,7 @@
 
 #define PRINTF_ENABLE               1
 
+/* 禁用IMU及其相关线程！ */
+#define IMU_BANNED 0
+#define USE_FINSH_THREAD 0
 #endif

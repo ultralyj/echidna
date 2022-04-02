@@ -59,6 +59,7 @@ uint16_t tjrc_mt9v03x_getVision(void);
 /* 测试函数 */
 void tjrc_mt9v03x_displayImage(uint8_t* image, uint8_t threshold);
 void tjrc_mt9v03x_displayImage_gray(uint8_t* image);
+void tjrc_mt9v03x_display_all(uint8_t* image, uint8_t threshold);
 /* 中断回调函数 */
 void tjrc_mt9v03x_uartCallBack(void);
 void tjrc_mt9v03x_vSync(void);

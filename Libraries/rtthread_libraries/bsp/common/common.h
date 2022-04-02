@@ -4,6 +4,7 @@
 
 #include "PLATFORM_TYPES.H"
 #include "IfxCpu.h"
+#include "stdio.h"
 
 typedef struct
 {

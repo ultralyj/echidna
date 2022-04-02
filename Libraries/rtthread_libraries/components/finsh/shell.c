@@ -24,7 +24,7 @@
 
 #include "finsh.h"
 #include "shell.h"
-
+#include "TC264_config.h"
 #ifdef FINSH_USING_MSH
 #include "msh.h"
 #endif
@@ -892,7 +892,10 @@ int finsh_system_init(void)
         rt_thread_startup(tid);
     return 0;
 }
+
+#if USE_FINSH_THREAD
 INIT_APP_EXPORT(finsh_system_init);
+#endif
 #pragma warning default
 #endif /* RT_USING_FINSH */
 

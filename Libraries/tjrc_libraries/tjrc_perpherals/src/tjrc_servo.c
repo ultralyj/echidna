@@ -16,10 +16,10 @@
  * @param servoAngle (float32)从-90到90度，舵机的旋转角度
  * @return NONE
  */
-float32 tjrc_servo_setAngle(float32 servoAngle)
+float32 tjrc_servo_setAngle(float servoAngle)
 {
-    const float32 SERVO_OFFSET = 0;
-    static float32 servoAngleRe = 0.00f;
+    const float SERVO_OFFSET = 0;
+    static float servoAngleRe = 0.00f;
     if (servoAngle >= -90.0f && servoAngle <= 90.0f)
     {
         /* 0.5 - 2.5 250 - 1250 */

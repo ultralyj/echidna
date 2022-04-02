@@ -1,16 +1,18 @@
 #ifndef CODE_NOSAYDIE_CAMERA_H_
 #define CODE_NOSAYDIE_CAMERA_H_
 
+#include <stdio.h>
 #include <stdint.h>
-//#include "tjrc_algorithm.h"
-//#include "tjrc_imageProc.h"
+#include <stdlib.h>
+#include <math.h>
+#include "rtthread.h"
+#include "tjrc_mt9v03x.h"
+
+
 //宏定义相关变量-------------------------------
 #define LCDW 120
 #define LCDH 80
 //配置摄像头参数
-#define MT9V03X_W               120             	//图像宽度 	范围1-188
-#define MT9V03X_H               80             	//图像高度	范围1-120
-
 //自定义结构体及相关变量
 
 typedef struct
@@ -67,30 +69,37 @@ struct RIGHT_EDGE
 	int32_t flag; //存在边界的标志
 };
 //自定义函数-----------------------------------
-void get_deal_image();      //取出待处理图像
-int32_t average_value(uint8_t* c);//求均值（均值滤波用）
-void average_filter(void);  //均值滤波
-uint8_t OSTU_bin(uint8_t width, uint8_t height, uint8_t* Image);//大津法求动态阈值
-uint8_t GetOSTUThreshold(uint8_t(*img)[LCDW], uint16_t start_row, uint16_t end_row, uint16_t start_col, uint16_t end_col); //大津法求动态阈值
-void get_binImage(uint8_t thres);//二值化
+//int32_t average_value(uint8_t* c);//求均值（均值滤波用）
+//void average_filter(void);  //均值滤波
+
 uint8_t black_(uint8_t x);  //判断是否是黑像素点
 uint8_t white_(uint8_t x);  //判断是否是白像素点
-int32_t edge_point_ornot(uint8_t row, uint8_t side);//判断是否存在边界点,并返回【-1：没有找到边界点，正值：返回找到的边界点 】
+int32_t edge_point_ornot(uint8_t image[MT9V03X_H][MT9V03X_W],uint8_t row, uint8_t side);//判断是否存在边界点,并返回【-1：没有找到边界点，正值：返回找到的边界点 】
 int32_t Get_angle(uint8_t ax, uint8_t ay, uint8_t bx, uint8_t by, uint8_t cx, uint8_t cy);//求取拐角的角度值
-void clear_point();     //清空结构体数据
 void get_mid();         //拟合中线
 uint8_t* Image_process(uint8_t imagein[LCDH][LCDW], uint8_t sidee[150 * 2 * 3]);
 void blur_points(struct LEFT_EDGE pts_in[120], struct LEFT_EDGE pts_out[120], int32_t num, int32_t kernel);
 int32_t clip(int32_t x, int32_t low, int32_t up);
 float fclip(float x, float low, float up);
-void findline_lefthand_adaptive(int32_t jilu_row, int32_t jilu_col, int32_t search_amount);
-void findline_righthand_adaptive(int32_t jilu_row, int32_t jilu_col, int32_t search_amount);
+void findline_lefthand_adaptive(uint8_t image[MT9V03X_H][MT9V03X_W],int32_t jilu_row, int32_t jilu_col, int32_t search_amount);
+void findline_righthand_adaptive(uint8_t image[MT9V03X_H][MT9V03X_W],int32_t jilu_row, int32_t jilu_col, int32_t search_amount);
 void edge_start();
 void edge_truncation(uint8_t side);
 void FitStraightLine(int32_t start, int32_t end, uint8_t side);
-void git_gui_value(uint8_t value_in[30]);
+//void git_gui_value(uint8_t value_in[30]);
 float statistics(uint8_t mode);
-void tjrc_imageProcess(uint8_t* image, tjrc_image_info* info);
-uint8_t XLW_otsuThreshold(uint8_t* image, uint16_t col, uint16_t row);
-int32_t GetOSTU(uint8_t* tmImage);
+void tjrc_imageProcess(uint8_t* image);
+
+
+/* 二值化函数组 */
+uint8_t tjrc_binarization_otsu(const uint8_t* image, uint16_t col, uint16_t row);
+uint8_t tjrc_binarization_avg(const uint8_t* image, uint16_t col, uint16_t row);
+void tjrc_binarization_getBinImage(uint8_t threshold,const uint8_t* image_in, uint8_t* image_out, uint16_t width, uint16_t height);
+void tjrc_sobel_autoThreshold(const uint8_t* imageIn, uint8_t* imageOut,uint16_t width,uint16_t height);
+//int32_t GetOSTU(uint8_t* tmImage);
+uint8_t OSTU_bin(uint8_t width, uint8_t height, uint8_t* Image);//大津法求动态阈值
+uint8_t GetOSTUThreshold(uint8_t(*img)[LCDW], uint16_t start_row, uint16_t end_row, uint16_t start_col, uint16_t end_col); //大津法求动态阈值
+void get_binImage(uint8_t thres);//二值化
+
 #endif /* CODE_NOSAYDIE_CAMERA_H_ */
+

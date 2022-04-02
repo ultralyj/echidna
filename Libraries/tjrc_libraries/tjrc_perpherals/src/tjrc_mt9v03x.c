@@ -302,6 +302,51 @@ uint16_t tjrc_mt9v03x_getVision(void)
 
 void tjrc_mt9v03x_displayImage(uint8_t* image, uint8_t threshold)
 {
+//    static uint8_t frameBuff[720];
+//    tjrc_st7735_setBusy(1);
+//    /* 简单缩放图像 */
+//    for (uint32_t i = 0; i < 60; i++)
+//    {
+//        for (uint32_t j = 0; j < 11; j++)
+//        {
+//            uint8_t temp = 0x00;
+//            for (uint8_t k = 0; k < 8; k++)
+//            {
+//                temp <<= 1;
+//                if (image[(i * 2)*MT9V03X_W+j * 16 + k*2] > threshold)
+//                    temp += 1;
+//                else
+//                    temp += 0;
+//            }
+//            frameBuff[i * 12 + j] = temp;
+//        }
+//    }
+//    tjrc_st7735_dispImage(frameBuff, 96, 60, 12, 90, RGB565_WHITE);
+//    tjrc_st7735_setBusy(0);
+}
+
+void tjrc_mt9v03x_displayImage_gray(uint8_t* image)
+{
+
+    tjrc_st7735_setBusy(1);
+    /* 简单缩放图像 */
+    for (uint32_t i = 0; i < MT9V03X_H/2; i++)
+    {
+        for (uint32_t j = 0; j < MT9V03X_W/2; j++)
+        {
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] = image[i*2*MT9V03X_W+j*2]/4;
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[i*2*MT9V03X_W+j*2+1]/4;
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2]/4;
+            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2+1]/4;
+        }
+    }
+    tjrc_st7735_dispImage_gray(MT9V03X_image_div4, MT9V03X_W/2, MT9V03X_H/2, 34, 28);
+    tjrc_st7735_setBusy(0);
+}
+
+
+void tjrc_mt9v03x_display_all(uint8_t* image, uint8_t threshold)
+{
     static uint8_t frameBuff[720];
     tjrc_st7735_setBusy(1);
     /* 简单缩放图像 */
@@ -324,23 +369,3 @@ void tjrc_mt9v03x_displayImage(uint8_t* image, uint8_t threshold)
     tjrc_st7735_dispImage(frameBuff, 96, 60, 0, 24, RGB565_WHITE);
     tjrc_st7735_setBusy(0);
 }
-
-void tjrc_mt9v03x_displayImage_gray(uint8_t* image)
-{
-
-    tjrc_st7735_setBusy(1);
-    /* 简单缩放图像 */
-    for (uint32_t i = 0; i < MT9V03X_H/2; i++)
-    {
-        for (uint32_t j = 0; j < MT9V03X_W/2; j++)
-        {
-            MT9V03X_image_div4[i*MT9V03X_W/2+j] = image[i*2*MT9V03X_W+j*2]/4;
-            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[i*2*MT9V03X_W+j*2+1]/4;
-            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2]/4;
-            MT9V03X_image_div4[i*MT9V03X_W/2+j] += image[(i*2+1)*MT9V03X_W+j*2+1]/4;
-        }
-    }
-    tjrc_st7735_dispImage_gray(MT9V03X_image_div4, MT9V03X_W/2, MT9V03X_H/2, 34, 28);
-    tjrc_st7735_setBusy(0);
-}
-

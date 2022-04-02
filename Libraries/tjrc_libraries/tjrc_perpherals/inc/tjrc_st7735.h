@@ -17,12 +17,20 @@
 #include "tjrc_peripherals.h"
 
 /* 引脚定义 */
-#define ST7735_SCL &MODULE_P33, 5
-#define ST7735_SDA &MODULE_P33, 10
-#define ST7735_RES &MODULE_P33, 11
-#define ST7735_DC &MODULE_P33, 4
-#define ST7735_CS &MODULE_P33, 8
-#define ST7735_BL &MODULE_P33, 9
+/* V2主板的引脚定义 */
+#define ST7735_SCL &MODULE_P33, 4
+#define ST7735_SDA &MODULE_P33, 5
+#define ST7735_RES &MODULE_P33, 8
+#define ST7735_DC &MODULE_P33, 9
+#define ST7735_CS &MODULE_P33, 10
+#define ST7735_BL &MODULE_P33, 11
+/* 下面是V1主板的引脚定义 */
+//#define ST7735_SCL &MODULE_P33, 5
+//#define ST7735_SDA &MODULE_P33, 10
+//#define ST7735_RES &MODULE_P33, 11
+//#define ST7735_DC &MODULE_P33, 4
+//#define ST7735_CS &MODULE_P33, 8
+//#define ST7735_BL &MODULE_P33, 9
 
 /* 定义屏幕的长宽 */
 #define PIXEL_WIDTH 128
@@ -62,6 +70,7 @@ void tjrc_st7735_drawRectangle(uint16_t x, uint16_t y,uint16_t width, uint16_t h
 void tjrc_st7735_drawBox(uint16_t x, uint16_t y,uint16_t width, uint16_t height, uint16_t color);
 /* 显示点图像 */
 void tjrc_st7735_dispImage(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color);
+void tjrc_st7735_dispbin(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color,uint8_t th);
 void tjrc_st7735_dispImage_gray(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y);
 /* 获取屏幕当前状态 */
 uint8_t tjrc_st7735_getBusy(void);

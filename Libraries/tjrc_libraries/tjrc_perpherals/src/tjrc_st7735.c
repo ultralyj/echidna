@@ -146,6 +146,23 @@ void tjrc_st7735_dispImage(uint8_t *image, uint16_t width, uint16_t height, uint
     tjrc_st7735_setBusy(0);
 }
 
+void tjrc_st7735_dispbin(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color,uint8_t th)
+{
+    tjrc_st7735_setBusy(1);
+    tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
+    for (uint32_t i = 0; i < height; i++)
+    {
+        for (uint32_t j = 0; j < width; j++)
+        {
+            if (image[i * 120 + j]>th?1:0)   //image[i * 120 + j]>th?1:0
+                st7735_WR_DATA(color);
+            else
+                st7735_WR_DATA(backgroundColor);
+        }
+    }
+    tjrc_st7735_setBusy(0);
+}
+
 /**
  * @brief 向屏幕写入一幅灰度图
  * @param image     (uint8_t*)位图指针

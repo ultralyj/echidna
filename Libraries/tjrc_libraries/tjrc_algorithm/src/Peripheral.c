@@ -13,6 +13,8 @@
 char legal_cmd[][10] = {"p", "d", "i", "P", "D", "I", "R", "tf", "tr"};
 uint8_t steer_direct = 0, run_direct = 0;
 
+extern rt_sem_t Run_sem;
+
 void tjrc_wireless_recCallBack(void)
 {
 	char buffer[20];
@@ -67,11 +69,11 @@ void tjrc_wireless_recCallBack(void)
 			printf("speed_d=%f", V_S_Kd);
 			break;
 		case 'R':
-			// rt_sem_release(Run_sem);
+			rt_sem_release(Run_sem);
 			run_direct = 1;
 			break;
 		case 'r':
-			// rt_sem_release(Run_sem);
+			rt_sem_release(Run_sem);
 			run_direct = 0;
 			break;
 		case 'J':

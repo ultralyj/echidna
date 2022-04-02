@@ -1,7 +1,7 @@
 /**
  * @file common.c
  * @author YYYDS team (1951578@tongji.edu.cn)
- * @brief 获取时钟频率信息
+ * @brief 获取时钟频率信息，重定义fputc等
  * @version 0.1
  * @date 2022-03-27
  * 
@@ -36,4 +36,17 @@ void get_clk(void)
 #if(PRINTF_ENABLE)
     tjrc_setAsclin0_uart();
 #endif
+}
+
+/**
+ * @brief 重定义fputc函数，实现串口0输出printf的信息
+ * 
+ * @param ch 字符数据
+ * @param stream 
+ * @return int 
+ */
+int fputc(int ch, FILE *stream)
+{
+    tjrc_asclin0_transmit((uint8_t*)&ch,1);
+    return(ch);
 }

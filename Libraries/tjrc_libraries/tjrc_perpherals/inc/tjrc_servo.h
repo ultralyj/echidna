@@ -14,7 +14,7 @@
 
 #include "tjrc_peripherals.h"
 
-float32 tjrc_servo_setAngle(float32 servoAngle);
+float tjrc_servo_setAngle(float servoAngle);
 
 
 
