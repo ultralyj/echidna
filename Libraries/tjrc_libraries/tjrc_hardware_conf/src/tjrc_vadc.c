@@ -71,13 +71,23 @@ void tjrc_setVadc_pin(uint8_t apinIndex)
  */
 uint16_t tjrc_vadc_getAnalog(uint8_t apinIndex)
 {
+    /* 均值滤波次数 */
+    const uint16_t mean_cnt = 128;
+
     Ifx_VADC_RES conversionResult;
     IfxVadc_GroupId VADC_GROUP = (IfxVadc_GroupId)apinIndex / 16;
     IfxVadc_ChannelId CHANNEL_ID = (IfxVadc_ChannelId)apinIndex % 16;
-    do
+
+    uint16_t vadc_value = 0;
+    for(uint16_t i=0;i<mean_cnt;i++)
     {
-        conversionResult = IfxVadc_getResult(&MODULE_VADC.G[VADC_GROUP],
-                                             (IfxVadc_ChannelResult)(CHANNEL_ID));
-    } while (!conversionResult.B.VF);
+        do
+        {
+            conversionResult = IfxVadc_getResult(&MODULE_VADC.G[VADC_GROUP],
+                                                 (IfxVadc_ChannelResult)(CHANNEL_ID));
+        } while (!conversionResult.B.VF);
+        vadc_value += (conversionResult.B.RESULT && 0x0fff);
+    }
+    vadc_value /= mean_cnt;
     return conversionResult.B.RESULT;
 }

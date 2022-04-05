@@ -59,7 +59,7 @@
 #include "Ifx_Types.h"
 
 #if IFXCPU_INTRINSICSGNUC_USE_MACHINE_INTRINSICS
-#include "machine/intrinsics.h"
+//#include "machine/intrinsics.h"
 #endif
 
 /******************************************************************************/

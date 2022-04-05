@@ -37,7 +37,7 @@
                             							
                             <targetPlatform archList="all" binaryParser="com.tasking.managedbuilder.TASKING_ELF" id="com.infineon.aurix.buildsystem.managed.tasking.targetPlatform.983834169" isAbstract="false" osList="all" superClass="com.infineon.aurix.buildsystem.managed.tasking.targetPlatform"/>
                             							
-                            <builder buildPath="${workspace_loc:/Seekfree_TC264_RTThread_Opensource_Library}/Debug" enabledIncrementalBuild="true" id="com.infineon.aurix.buildsystem.managed.tasking.builder.2145844482" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.infineon.aurix.buildsystem.managed.tasking.builder"/>
+                            <builder buildPath="${workspace_loc:/Seekfree_TC264_RTThread_Opensource_Library}/Debug" enableAutoBuild="false" enabledIncrementalBuild="true" id="com.infineon.aurix.buildsystem.managed.tasking.builder.2145844482" keepEnvironmentInBuildfile="false" name="Gnu Make Builder" parallelBuildOn="true" parallelizationNumber="optimal" superClass="com.infineon.aurix.buildsystem.managed.tasking.builder"/>
                             							
                             <tool id="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.debug.705721940" name="TASKING C/C++ Compiler" superClass="com.infineon.aurix.buildsystem.managed.tool.c.compiler.tasking.debug">
                                 								

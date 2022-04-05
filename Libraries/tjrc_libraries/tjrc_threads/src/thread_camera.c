@@ -27,6 +27,9 @@ static void thread_camera_entry(void *param);
  */
 void tjrc_thread_camera_init(void)
 {
+#if CAMERA_BANNED
+    rt_kprintf("[WARNNING]camera is banned!!\r\n");
+#else
     rt_err_t rtt_res;
     tid_camera = rt_thread_create("camera",thread_camera_entry, RT_NULL,256,8,2);
     if(tid_camera != RT_NULL)
@@ -34,6 +37,7 @@ void tjrc_thread_camera_init(void)
         rtt_res = rt_thread_startup(tid_camera);
         rt_kprintf("[rt-thread]create and startup thread: camera(%d)\r\n",rtt_res);
     }
+#endif
 }
 
 /**

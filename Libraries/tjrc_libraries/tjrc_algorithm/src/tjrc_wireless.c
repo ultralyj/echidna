@@ -1,59 +1,62 @@
 /**
  * @file Peripheral.c
  * @author YYYDS team (1951578@tongji.edu.cn)
- * @brief
+ * @brief 无线串口接收函数的c文件
  * @version 0.1
  * @date 2022-03-13
  *
  * @copyright Copyright (c) 2022
  *
  */
-#include "Peripheral.h"
+#include "tjrc_wireless.h"
 
-char legal_cmd[][10] = {"p", "d", "i", "P", "D", "I", "R", "tf", "tr"};
-uint8_t steer_direct = 0, run_direct = 0;
+uint8_t steer_direct = 2, run_direct = 0;
 
 extern rt_sem_t Run_sem;
 
+/**
+ * @brief 串口参数调试回调函数（数据格式："(<coe><num_int>)"，如"(p100)"）
+ * 
+ */
 void tjrc_wireless_recCallBack(void)
 {
 	char buffer[20];
-	static uint8_t num = 0;
+	static uint8_t rx_cnt = 0;
 	static uint8_t state = 0;
 	float data = 0;
-	tjrc_asclin1_receive((uint8 *)&buffer[num]);
-	if (buffer[num] == '(')
+	tjrc_asclin1_receive((uint8_t *)&buffer[rx_cnt]);
+	if (buffer[rx_cnt] == '(')
 	{ 
 		state = 1;
-		num++;
+		rx_cnt++;
 	}
-	else if (state == 1 && ((buffer[num] >= 'a' && buffer[num] <= 'z') || (buffer[num] >= 'A' && buffer[num] <= 'Z')))
+	else if (state == 1 && ((buffer[rx_cnt] >= 'a' && buffer[rx_cnt] <= 'z') || (buffer[rx_cnt] >= 'A' && buffer[rx_cnt] <= 'Z')))
 	{
-		num++;
+		rx_cnt++;
 		state = 2;
 	}
-	else if (state == 2 && buffer[num] >= '0' && buffer[num] <= '9' && buffer[num] != ')')
+	else if (state == 2 && buffer[rx_cnt] >= '0' && buffer[rx_cnt] <= '9' && buffer[rx_cnt] != ')')
 	{
-		num++;
+		rx_cnt++;
 	}
-	else if (buffer[num] == ')')
+	else if (buffer[rx_cnt] == ')')
 	{
-		for (uint8 i = 0; i + 2 < num; i++)
+		for (uint8_t i = 0; i + 2 < rx_cnt; i++)
 		{
-			data += (buffer[2 + i] - 48) * int_pow(10, num - 3 - i);
+			data += (buffer[2 + i] - 48) * int_pow(10, rx_cnt - 3 - i);
 		}
 		switch (buffer[1])
 		{
 		case 'p':
-			angle_kp = data;
+		    Dr_kp = data/100;
 			printf("angle_kp:%f", angle_kp);
 			break;
 		case 'd':
-			angle_kd = data;
+		    Dr_kd = data/100;
 			printf("angle_kd=%f", angle_kd);
 			break;
 		case 'i':
-			angle_ki = data;
+		    Dr_ki = data/100;
 			printf("angle_kd=%f", angle_ki);
 			break;
 		case 'P':
@@ -85,7 +88,7 @@ void tjrc_wireless_recCallBack(void)
 			steer_direct = 1;
 			break;
 		}
-		num = 0;
+		rx_cnt = 0;
 		state = 0;
 	}
 }

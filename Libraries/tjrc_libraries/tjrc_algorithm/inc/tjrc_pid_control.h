@@ -14,16 +14,19 @@
 
 #include "stdint.h"
 
-#include "../../tjrc_perpherals/tjrc_peripherals.h"
-#include "tjrc_gpt12.h"
+#include "tjrc_peripherals.h"
 #include "Common_Math.h"
-#include "Peripheral.h"
+#include "tjrc_wireless.h"
 
 
 /* 直立环可控参数 */
 extern float angle_kp, angle_kd, angle_ki;
 /* 速度环可控参数 */
 extern float V_S_Kp, V_S_Ki, V_S_Kd;
+/* 驱动环可控参数 */
+extern float Dr_kp, Dr_ki, Dr_kd;
+/* 速度环可控参数 */
+extern float direct_kp, direct_ki, direct_kd;
 
 /* PID控制函数 */
 int32_t tjrc_pid_balance(float angle_kalman, float angle_dot);
@@ -35,6 +38,6 @@ float tjrc_drive_getSpeed(void);
 extern float target_speed;
 
 //----------------方向
-float Turn_out(void);
+float Turn_out(float angle_kalman, float angle_dot);
 extern float Turn_delta;
 #endif /* CODE_CONTROL_H_ */

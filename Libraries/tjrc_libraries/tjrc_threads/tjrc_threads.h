@@ -13,7 +13,7 @@
 #include "tjrc_hardware.h"
 #include "tjrc_algorithm.h"
 #include "tjrc_systemInit.h"
-
+#include "TC264_config.h"
 
 void tjrc_thread_life_init(void);
 void tjrc_thread_key_init(void);

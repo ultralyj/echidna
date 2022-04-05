@@ -22,7 +22,7 @@
 #define FLYWHEEL_MOTOR_GTM_ATOM_CHANNEL IfxGtm_ATOM2_5_TOUT35_P33_13_OUT
 #define DRIVE_MOTOR_GTM_ATOM_CHANNEL    IfxGtm_ATOM0_1_TOUT1_P02_1_OUT
 
-void tjrc_setFlyWheelMotor(void);
+void tjrc_setMotors(void);
 void tjrc_flyWheelMotor_pwm(int32_t duty);
 void tjrc_driveMotor_pwm(int32_t duty);
 

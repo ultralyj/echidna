@@ -44,7 +44,7 @@
 /******************************************************************************/
 #define FRACT_MAX 0x7fffffff
 
-#include <machine/cint.h>
+//#include <machine/cint.h>
 #define __interrupt(intno)
 
 typedef long          fract;

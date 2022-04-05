@@ -39,6 +39,11 @@ void tjrc_setKeys_pin(void)
     IfxPort_setPinModeInput(KEY1_PIN, IfxPort_InputMode_pullUp);
     IfxPort_setPinModeInput(KEY2_PIN, IfxPort_InputMode_pullUp);
     IfxPort_setPinModeInput(KEY3_PIN, IfxPort_InputMode_pullUp);
+
+    IfxPort_setPinModeInput(SWITCH0_PIN, IfxPort_InputMode_pullUp);
+    IfxPort_setPinModeInput(SWITCH1_PIN, IfxPort_InputMode_pullUp);
+    IfxPort_setPinModeInput(SWITCH2_PIN, IfxPort_InputMode_pullUp);
+    IfxPort_setPinModeInput(SWITCH3_PIN, IfxPort_InputMode_pullUp);
 }
 
 /**
@@ -49,7 +54,7 @@ void tjrc_setBeep_pin(void)
 {
 #ifdef ACTIVE_BUZZER
     IfxPort_setPinModeOutput(BEEP_PIN, IfxPort_OutputMode_pushPull, IfxPort_OutputIdx_general);
-    IfxPort_setPinLow(BEEP_PIN);
+    IfxPort_setPinHigh(BEEP_PIN);
 #else
     /* 无源蜂鸣器 */
 #endif
@@ -124,5 +129,13 @@ keyValue tjrc_keyChannel_check(keyChannel channel)
     return ans;
 }
 
-
+uint8_t tjrc_switch_scan(void)
+{
+    uint8_t switch_value = 0x00;
+    switch_value |= (!IfxPort_getPinState(SWITCH0_PIN) && 0x01) << 0;
+    switch_value |= (!IfxPort_getPinState(SWITCH1_PIN) && 0x01) << 1;
+    switch_value |= (!IfxPort_getPinState(SWITCH2_PIN) && 0x01) << 2;
+    switch_value |= (!IfxPort_getPinState(SWITCH3_PIN) && 0x01) << 3;
+    return switch_value;
+}
 

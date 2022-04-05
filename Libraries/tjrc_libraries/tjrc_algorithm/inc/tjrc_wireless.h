@@ -1,7 +1,7 @@
 /**
- * @file Peripheral.h
+ * @file tjrc_wireless.h
  * @author YYYDS team (1951578@tongji.edu.cn)
- * @brief 
+ * @brief 无线串口接收函数的头文件
  * @version 0.1
  * @date 2022-03-13
  * 
@@ -9,8 +9,8 @@
  * 
  */
 
-#ifndef __PERIPHERAL_h
-#define __PERIPHERAL_h
+#ifndef __TJRC_WIRELESS__
+#define __TJRC_WIRELESS__
 
 #include "tjrc_hardware.h"
 #include "tjrc_peripherals.h"

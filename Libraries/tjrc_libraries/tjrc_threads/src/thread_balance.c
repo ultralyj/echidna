@@ -38,7 +38,7 @@ void tjrc_thread_balance_init(void)
     rt_kprintf("[WARNNING]IMU is banned!!\r\n");
 #else
     rt_err_t rtt_res;
-    balance_tid = rt_thread_create("balance", balance_entry, RT_NULL, 1024, 3, 30);
+    balance_tid = rt_thread_create("balance", balance_entry, RT_NULL, 1024, 3, 5);
     if (balance_tid != RT_NULL)
     {
         rtt_res = rt_thread_startup(balance_tid);
@@ -53,7 +53,7 @@ void tjrc_thread_run_init(void)
 
     rt_err_t rtt_res;
     Run_sem = rt_sem_create("Run_sem", 0, RT_IPC_FLAG_FIFO);
-    Run_tid = rt_thread_create("run", Run_entry, RT_NULL, 512, 26, 30);
+    Run_tid = rt_thread_create("run", Run_entry, RT_NULL, 256, 3, 5);
     if (Run_tid != RT_NULL)
     {
         rtt_res = rt_thread_startup(Run_tid);
@@ -101,7 +101,6 @@ static void balance_entry(void *parameter)
 
     /* PWM输出变量 */
     int flywheel_pwmOut = 0, drive_pwmOut = 0;
-    static uint32_t dutyr[3] = {50, 50, 50};
 
     while (1)
     {
@@ -135,9 +134,10 @@ static void balance_entry(void *parameter)
                         b_flyWheel_speed = tjrc_flyWheel_getSpeed();
                         b_angle_delta = tjrc_pid_speedLoop(b_flyWheel_speed);
                         uint8_t str[30];
-                        sprintf((char*)str,"%f,%f,%f\n",b_flyWheel_speed,b_angle_kalman,Angle_zero);
+                        sprintf((char*)str,"%f,%f,%f\n",b_turn_delta,b_angle_kalman,Angle_zero);
                         tjrc_asclin1_sendStr(str);
-                        printf("%s\r\n",str);
+                        sprintf((char*)str,"A0:%.03f AK:%.03f ",Angle_zero,b_angle_kalman);
+                        tjrc_st7735_dispStr612(0,116,(uint8_t*)str,RGB565_BLUE);
                     }
                     speedLoop_cnt++;
                 }
@@ -148,7 +148,7 @@ static void balance_entry(void *parameter)
                     if (turn_cnt == 2)
                     {
                         turn_cnt = 0;
-                        b_turn_delta = Turn_out();
+                        b_turn_delta = Turn_out(b_angle_kalman, b_angle_dot);
                     }
                     turn_cnt++;
                 }
@@ -159,8 +159,8 @@ static void balance_entry(void *parameter)
                     {
                         drive_cnt = 0;
                         b_drive_speed = tjrc_drive_getSpeed();
+                        extern float target_speed;
                         drive_pwmOut = tjrc_pid_drive(b_drive_speed);
-                        /* 输入CCU60，输出互补PWM波 */
                         tjrc_driveMotor_pwm(drive_pwmOut);
                     }
                     drive_cnt++;
@@ -174,7 +174,7 @@ static void balance_entry(void *parameter)
                     IfxPort_setPinLow(FLYWHEEL_MOTOR_EN_PIN);
                 }
                 extern float Angle_zero;
-                Angle_zero -= b_angle_delta + b_turn_delta;                         //叠加串联输出
+                Angle_zero -= b_angle_delta;                         //叠加串联输出
                 flywheel_pwmOut = s32_AmpConstrain(-9000, 9000, flywheel_pwmOut); //平衡环限幅
                 tjrc_flyWheelMotor_pwm(-flywheel_pwmOut);
             }

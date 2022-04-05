@@ -122,9 +122,9 @@ float target_speed = 0;
  * 
  */
 float Dr_kp = 2;
-float Dr_ki = 0.3;
-float Dr_kd = 0.1;
-const float Max_Dr_Integral = 2000;
+float Dr_ki = 2;
+float Dr_kd = 0.35;
+const float Max_Dr_Integral = 4000;
 
 /**
  * @brief 直接法PID控制后轮驱动速度环
@@ -134,7 +134,7 @@ const float Max_Dr_Integral = 2000;
 int32_t tjrc_pid_drive(float speed)
 {
     static float Dr_Bias = 0,last_Dr_Bias = 0;
-    static int duty = 0, last_duty = 0;
+    static int16_t duty = 0, last_duty = 0;
     static float Dr_Integral = 0;
     /* 获取速度差值 */
     Dr_Bias = target_speed - speed;
@@ -146,6 +146,8 @@ int32_t tjrc_pid_drive(float speed)
     /* 更新数据 */
     last_duty = duty;
     last_Dr_Bias = Dr_Bias;
+    /* 输出限幅 */
+    duty = int16_t_Constrain(duty,-9000,9000);
     /* 输出占空比 */
     return duty;
 }
@@ -157,37 +159,65 @@ int32_t tjrc_pid_drive(float speed)
  **
  **********************************************************/
 
-float kkp = -0.00001;
+float direct_kp = 300;
+float direct_ki = 5;
+float direct_kd = 8;
+float Direct_Integral_Max = 1;
 /**
  * @brief 
  * 
  * @return float 舵机控制量输出
  */
-float Turn_out(void)
+float Turn_out(float angle_kalman, float angle_dot)
 {
     static float Turn_delta = 0;
-    static float direct = 0;
+    static float direct_target = 0, direct_bias_pid = 0;
     static float last_Turn_delta = 0;
+    static float direct_integral = 0;
+
+    /* 远程目标角度调节 */
     if (steer_direct == 0 || steer_direct == 1)
     {
         if (steer_direct == 0)
         {
-            direct += 5;
+            direct_target += 5;
         }
         else
         {
-            direct -= 5;
+            direct_target -= 5;
         }
-        direct = float_Constrain(direct, -18, 18);
-        tjrc_servo_setAngle(direct);
         steer_direct = -1;
         Turn_delta = 0;
         // Turn_delta = direct*kkp*drive_encoder;//计算得到此次的压弯角度
     }
+
+    /* 获取角度偏移量（IMU测得角度与目标角度之差） */
+    float angle_bias = angle_kalman - Angle_zero;
+    /* 若角度偏移过大，动量轮难以调节，则使用舵机调节 */
+    if(f_Abs(angle_bias) > 0.01f)
+    {
+
+        /* 计算积分量并限幅 */
+        direct_integral += angle_bias;
+        direct_integral = float_Constrain(direct_integral, -Direct_Integral_Max, Direct_Integral_Max);
+        if(f_Abs(angle_bias) < 0.02f)
+            direct_integral = direct_integral *0.5f;
+        /* 直接法PID */
+        direct_bias_pid = ((float)(direct_kp * angle_bias + direct_kd * (angle_dot) + direct_ki * direct_integral));
+    }
+    else
+    {
+        direct_bias_pid = 0.0f;
+    }
+    float direct = direct_target + direct_bias_pid;
+    direct = float_Constrain(direct, -18, 18);
+    tjrc_servo_setAngle(direct);
+
+
     Turn_delta -= last_Turn_delta; //减去上次的设定
     last_Turn_delta = Turn_delta;
     Turn_delta /= 2; //由于平衡环频率是方向环两倍，分两次叠加，降低突变影响？
-    return Turn_delta;
+    return direct_bias_pid;
 }
 
 float enc0_fade_coe = 0.5f;
@@ -206,6 +236,8 @@ float tjrc_flyWheel_getSpeed(void)
     return speed_enc0;
 }
 
+
+float enc1_fade_coe = 0.9f;
 /**
  * @brief 通过编码器1(GPT12-T6)，获取驱动轮的速度信息
  * 
@@ -216,7 +248,7 @@ float tjrc_drive_getSpeed(void)
     static float speed_enc1_last = 0;
     float speed_enc1;
     speed_enc1 = (float)tjrc_gpt12_getT6();
-    speed_enc1 = (0.5 * speed_enc1_last + 0.5 * speed_enc1);
+    speed_enc1 = ((1 - enc1_fade_coe) * speed_enc1_last + enc1_fade_coe * speed_enc1);
     speed_enc1_last = speed_enc1;
     return speed_enc1;
 }

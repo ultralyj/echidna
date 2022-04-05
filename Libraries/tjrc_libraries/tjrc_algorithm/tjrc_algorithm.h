@@ -1,12 +1,16 @@
-/*
- * tjrc_algorithm.h
- *
- *  Created on: 2022年3月10日
- *      Author: 11657
+/**
+ * @file tjrc_algorithm.h
+ * @author YYYDS team (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 0.1
+ * @date 2022-04-04
+ * 
+ * @copyright Copyright (c) 2022
+ * 
  */
 
-#ifndef LIBRARIES_TJRC_LIBRARIES_TJRC_ALGORITHM_TJRC_ALGORITHM_H_
-#define LIBRARIES_TJRC_LIBRARIES_TJRC_ALGORITHM_TJRC_ALGORITHM_H_
+#ifndef __TJRC_ALGORITHM__
+#define __TJRC_ALGORITHM__
 
 
 
@@ -14,10 +18,10 @@
 #include "Common_Math.h"
 #include "tjrc_pid_control.h"
 #include "tjrc_kalmam.h"
-#include "Peripheral.h"
+#include "tjrc_wireless.h"
 #include "tjrc_fileIO.h"
 #include "tjrc_imageProc.h"
 
 
 
-#endif /* LIBRARIES_TJRC_LIBRARIES_TJRC_ALGORITHM_TJRC_ALGORITHM_H_ */
+#endif /* __TJRC_ALGORITHM__ */
