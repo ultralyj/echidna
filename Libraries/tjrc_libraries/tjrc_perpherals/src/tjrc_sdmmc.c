@@ -54,7 +54,7 @@ int32_t tjrc_setSdmmc(void)
     }
     else
     {
-        rt_kprintf("[ERR]cannot find sd card\r\n");
+        rt_kprintf("[ERR*]cannot find sd card\r\n");
         return -1;
     }
 

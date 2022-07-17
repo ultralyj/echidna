@@ -37,13 +37,19 @@ void tjrc_setHardware(void)
     /* 配置LED,按键和蜂鸣器的GPIO */
     tjrc_setLed_pin();
     tjrc_setKeys_pin();
+#if !BEEP_MUTE
     tjrc_setBeep_pin();
+#endif
     switch_value = tjrc_switch_scan();
     //tjrc_setCcu61_pwm();
     /* 配置gpt12，获取编码器数值 */
     tjrc_setGpt12_encoder();
     /* 初始化i2c接口 */
+#if USE_SOFTWATE_I2C
+    simiic_init();
+#else
     tjrc_setIic();
+#endif
     /* asclin1 */
     tjrc_setAsclin1_uart();
     /* 初始化模拟引脚 */
@@ -61,18 +67,22 @@ void tjrc_setHardware(void)
     printf("[vadc]Monitoring voltage: VCC_3V3:%.3fV, VCC_5V:%.3fV, DC_IN:%.3fV\r\n",VCC_3V3,VCC_5V0,VCC_BAT);
     rt_kprintf("______________________________________________________________________\r\n");
     /* 若电池电压正常，则亮绿灯 */
-    if(VCC_BAT>7 &&VCC_BAT<8.4)
+    if(VCC_BAT>10.8 &&VCC_BAT<12.6)
     {
         IfxPort_setPinLow(SYSTEM_LED);
+#if BEEP_MUTE
         IfxPort_setPinLow(BEEP_PIN);
         rt_thread_mdelay(50);
         IfxPort_setPinHigh(BEEP_PIN);
+#endif
     }
     else
     {
+#if BEEP_MUTE
         IfxPort_setPinLow(BEEP_PIN);
         rt_thread_mdelay(300);
         IfxPort_setPinHigh(BEEP_PIN);
+#endif
     }
 }
 
@@ -85,8 +95,14 @@ void tjrc_setPeripherals(void)
     /* 初始化电机 */
     tjrc_setMotors();
     /* 配置gtm(atom)产生舵机控制信号 */
-    tjrc_setGtmAtom_pwm(SERVO_GTM_ATOM_CHANNEL, 50);
-    tjrc_servo_setAngle(0);
+    if(VCC_5V0 > 4.5)
+    {
+        tjrc_setGtmAtom_pwm(SERVO_GTM_ATOM_CHANNEL, 50);
+        extern uint8_t servo_armed;
+        servo_armed = 1;
+        tjrc_servo_setAngle(0);
+    }
+
 
 #if !IMU_BANNED
     /* 初始化IMU:ICM20602 */
@@ -192,42 +208,42 @@ static void tjrc_setUi(void)
     tjrc_st7735_drawBox(32,26,64,44,RGB565_GRAY);
     /* 显示电源电压(0,104) */
     sprintf(str,"BAT:%.02fV",VCC_BAT);
-    if(VCC_BAT>7.0f && VCC_BAT<8.4f)
+    if(VCC_BAT>10.8f && VCC_BAT<12.6f)
         tjrc_st7735_dispStr612(2,104,(uint8_t*)str,RGB565_GREEN);
     else
         tjrc_st7735_dispStr612(2,104,(uint8_t*)str,RGB565_RED);
 
     /* 四个拨码开关 (60，104) */
     if(switch_value & SWITCH0)
-        tjrc_st7735_drawBox(61,107,4,6,RGB565_YELLOW);
-    else
-        tjrc_st7735_drawBox(61,107,4,6,RGB565_GRAY);
-    if(switch_value & SWITCH1)
         tjrc_st7735_drawBox(67,107,4,6,RGB565_YELLOW);
     else
         tjrc_st7735_drawBox(67,107,4,6,RGB565_GRAY);
-    if(switch_value & SWITCH2)
+    if(switch_value & SWITCH1)
         tjrc_st7735_drawBox(73,107,4,6,RGB565_YELLOW);
     else
         tjrc_st7735_drawBox(73,107,4,6,RGB565_GRAY);
-    if(switch_value & SWITCH3)
+    if(switch_value & SWITCH2)
         tjrc_st7735_drawBox(79,107,4,6,RGB565_YELLOW);
     else
         tjrc_st7735_drawBox(79,107,4,6,RGB565_GRAY);
+    if(switch_value & SWITCH3)
+        tjrc_st7735_drawBox(85,107,4,6,RGB565_YELLOW);
+    else
+        tjrc_st7735_drawBox(85,107,4,6,RGB565_GRAY);
 
     /* IMU和相机状态显示(84,104) */
     extern const uint8_t image_camera_16x16[];
     extern const uint8_t image_imu_16x16[];
 #if CAMERA_BANNED
-    tjrc_st7735_dispImage((uint8_t*)image_camera_16x16,16,16,88,106,RGB565_GRAY);
+    tjrc_st7735_dispImage((uint8_t*)image_camera_16x16,16,16,92,106,RGB565_GRAY);
 #else
-    tjrc_st7735_dispImage((uint8_t*)image_camera_16x16,16,16,88,106,RGB565_GREEN);
+    tjrc_st7735_dispImage((uint8_t*)image_camera_16x16,16,16,92,106,RGB565_GREEN);
 #endif
 
 #if IMU_BANNED
-    tjrc_st7735_dispImage((uint8_t*)image_imu_16x16,16,16,102,104,RGB565_GRAY);
+    tjrc_st7735_dispImage((uint8_t*)image_imu_16x16,16,16,102,110,RGB565_GRAY);
 #else
-    tjrc_st7735_dispImage((uint8_t*)image_imu_16x16,16,16,102,104,RGB565_GREEN);
+    tjrc_st7735_dispImage((uint8_t*)image_imu_16x16,16,16,102,110,RGB565_GREEN);
 #endif
 
     /* 平衡相关参数显示 */

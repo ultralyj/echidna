@@ -40,4 +40,6 @@ extern float target_speed;
 //----------------方向
 float Turn_out(float angle_kalman, float angle_dot);
 extern float Turn_delta;
+
+void tjrc_motionControl(void);
 #endif /* CODE_CONTROL_H_ */

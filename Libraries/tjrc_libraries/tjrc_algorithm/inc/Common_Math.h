@@ -50,6 +50,7 @@ uint16_t uint16_t_Constrain(uint16_t amt,uint16_t low,uint16_t high);
 /*DOUBLE型参数限幅函数*/
 double double_Constrain(double amt,double low,double high);
 
+int32_t int_Abs(int32_t src);
 
 int int_pow(int src, int p);
 

@@ -10,6 +10,7 @@
  */
 
 #include "tjrc_st7735.h"
+#include "rtthread.h"
 
 /* 屏幕控制参数 */
 uint16_t backgroundColor = RGB565_BLACK;
@@ -126,41 +127,47 @@ void tjrc_st7735_drawBox(uint16_t x, uint16_t y,uint16_t width, uint16_t height,
  */
 void tjrc_st7735_dispImage(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color)
 {
-    tjrc_st7735_setBusy(1);
-    tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
-    for (uint32_t i = 0; i < height; i++)
+    if(!tjrc_st7735_getBusy())
     {
-        for (uint32_t j = 0; j < width / 8; j++)
+        tjrc_st7735_setBusy(1);
+        tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
+        for (uint32_t i = 0; i < height; i++)
         {
-            uint8_t temp = image[i * width / 8 + j];
-            for (uint32_t k = 0; k < 8; k++)
+            for (uint32_t j = 0; j < width / 8; j++)
             {
-                if (temp & 0x80)
-                    st7735_WR_DATA(color);
-                else
-                    st7735_WR_DATA(backgroundColor);
-                temp <<= 1;
+                uint8_t temp = image[i * width / 8 + j];
+                for (uint32_t k = 0; k < 8; k++)
+                {
+                    if (temp & 0x80)
+                        st7735_WR_DATA(color);
+                    else
+                        st7735_WR_DATA(backgroundColor);
+                    temp <<= 1;
+                }
             }
         }
+        tjrc_st7735_setBusy(0);
     }
-    tjrc_st7735_setBusy(0);
 }
 
 void tjrc_st7735_dispbin(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y, uint16_t color,uint8_t th)
 {
-    tjrc_st7735_setBusy(1);
-    tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
-    for (uint32_t i = 0; i < height; i++)
+    if(!tjrc_st7735_getBusy())
     {
-        for (uint32_t j = 0; j < width; j++)
+        tjrc_st7735_setBusy(1);
+        tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
+        for (uint32_t i = 0; i < height; i++)
         {
-            if (image[i * 120 + j]>th?1:0)   //image[i * 120 + j]>th?1:0
-                st7735_WR_DATA(color);
-            else
-                st7735_WR_DATA(backgroundColor);
+            for (uint32_t j = 0; j < width; j++)
+            {
+                if (image[i * 120 + j]>th?1:0)   //image[i * 120 + j]>th?1:0
+                    st7735_WR_DATA(color);
+                else
+                    st7735_WR_DATA(backgroundColor);
+            }
         }
+        tjrc_st7735_setBusy(0);
     }
-    tjrc_st7735_setBusy(0);
 }
 
 /**
@@ -170,25 +177,27 @@ void tjrc_st7735_dispbin(uint8_t *image, uint16_t width, uint16_t height, uint16
  * @param height    (uint16_t)图像高度（像素）
  * @param dx        (uint16_t)字符起始横坐标(L->R)
  * @param dy        (uint16_t)字符起始纵坐标(U->D)
- * @param color     (uint16_t)字符串颜色
  * @return NONE
  */
 void tjrc_st7735_dispImage_gray(uint8_t *image, uint16_t width, uint16_t height, uint16_t x, uint16_t y)
 {
-    tjrc_st7735_setBusy(1);
-    tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
-    for (uint32_t i = 0; i < height; i++)
+    if(!tjrc_st7735_getBusy())
     {
-        uint16_t color_565;
-        for (uint32_t j = 0; j < width; j++)
+        tjrc_st7735_setBusy(1);
+        tjrc_st7735_setRegion(x, y, x + width - 1, y + height - 1);
+        for (uint32_t i = 0; i < height; i++)
         {
-            color_565 = (uint16_t)(image[i * width + j]>>3)<<11;
-            color_565 += (uint16_t)(image[i * width + j]>>2)<<5;
-            color_565 += (uint16_t)(image[i * width + j]>>3);
-            st7735_WR_DATA(color_565);
+            uint16_t color_565;
+            for (uint32_t j = 0; j < width; j++)
+            {
+                color_565 = (uint16_t)(image[i * width + j]>>3)<<11;
+                color_565 += (uint16_t)(image[i * width + j]>>2)<<5;
+                color_565 += (uint16_t)(image[i * width + j]>>3);
+                st7735_WR_DATA(color_565);
+            }
         }
+        tjrc_st7735_setBusy(0);
     }
-    tjrc_st7735_setBusy(0);
 }
 
 /**

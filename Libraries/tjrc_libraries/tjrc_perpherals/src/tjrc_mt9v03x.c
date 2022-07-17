@@ -186,6 +186,9 @@ void tjrc_mt9v03x_dmaCallBack(void)
     {
         MT9V03X_dmaCnt = 0;
         tjrc_mt9v03x_setFinshFlag(); //一副图像从采集开始到采集结束耗时3.8MS左右(50FPS、188*120分辨率)
+        extern IfxCpu_syncEvent cameraCapture_event;
+        /* 发送事件通知CPU1处理图像 */
+        IfxCpu_emitEvent(&cameraCapture_event);
         IfxDma_disableChannelTransaction(&MODULE_DMA, MT9V03X_DMA_CH);
     }
 }
@@ -327,8 +330,6 @@ void tjrc_mt9v03x_displayImage(uint8_t* image, uint8_t threshold)
 
 void tjrc_mt9v03x_displayImage_gray(uint8_t* image)
 {
-
-    tjrc_st7735_setBusy(1);
     /* 简单缩放图像 */
     for (uint32_t i = 0; i < MT9V03X_H/2; i++)
     {
@@ -341,7 +342,6 @@ void tjrc_mt9v03x_displayImage_gray(uint8_t* image)
         }
     }
     tjrc_st7735_dispImage_gray(MT9V03X_image_div4, MT9V03X_W/2, MT9V03X_H/2, 34, 28);
-    tjrc_st7735_setBusy(0);
 }
 
 

@@ -241,6 +241,11 @@ float float_Constrain(float src,float Min,float Max){
     else return (src);
 }
 
+int32_t int_Abs(int32_t src)
+{
+    return src<0?-src:src;
+}
+
 int int_pow(int src, int p){
     int base = src;
     if(p==0){

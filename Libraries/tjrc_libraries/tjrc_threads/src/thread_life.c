@@ -23,7 +23,7 @@ void tjrc_thread_life_init(void)
 {
     rt_err_t rtt_res;
     /* 创建，并运行按键扫描线程 */
-    tid_life = rt_thread_create("life",thread_life_entry, RT_NULL,128,9,2);
+    tid_life = rt_thread_create("life",thread_life_entry, RT_NULL,128,9,1);
     if(tid_life != RT_NULL)
     {
         rtt_res = rt_thread_startup(tid_life);

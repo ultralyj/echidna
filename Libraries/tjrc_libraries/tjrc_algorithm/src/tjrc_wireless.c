@@ -13,7 +13,8 @@
 uint8_t steer_direct = 2, run_direct = 0;
 
 extern rt_sem_t Run_sem;
-
+extern float target_speed;
+extern float direct_target;
 /**
  * @brief 串口参数调试回调函数（数据格式："(<coe><num_int>)"，如"(p100)"）
  * 
@@ -48,15 +49,15 @@ void tjrc_wireless_recCallBack(void)
 		switch (buffer[1])
 		{
 		case 'p':
-		    Dr_kp = data/100;
+		    angle_kp = data*100;
 			printf("angle_kp:%f", angle_kp);
 			break;
 		case 'd':
-		    Dr_kd = data/100;
+		    angle_kd = data*100;
 			printf("angle_kd=%f", angle_kd);
 			break;
 		case 'i':
-		    Dr_ki = data/100;
+		    angle_ki = data*100;
 			printf("angle_kd=%f", angle_ki);
 			break;
 		case 'P':
@@ -79,6 +80,14 @@ void tjrc_wireless_recCallBack(void)
 			rt_sem_release(Run_sem);
 			run_direct = 0;
 			break;
+		case 'O':
+		    target_speed = data;
+            run_direct = 1;
+            break;
+        case 'o':
+            target_speed = -data;
+            run_direct = 0;
+            break;
 		case 'J':
 			// rt_sem_release(Direct_sem);
 			steer_direct = 0;
@@ -87,8 +96,73 @@ void tjrc_wireless_recCallBack(void)
 			// rt_sem_release(Direct_sem);
 			steer_direct = 1;
 			break;
+		case 'C':
+            // rt_sem_release(Direct_sem);
+		    direct_target = data;
+            break;
+        case 'c':
+            // rt_sem_release(Direct_sem);
+            steer_direct = -data;
+            break;
+		case 'X':
+		    target_speed = 0;
+		    break;
+		case 'Y':
+		    direct_target = 0;
+		    break;
+		case 'B':
+		    IfxPort_togglePin(BEEP_PIN);
+		    break;
 		}
 		rx_cnt = 0;
 		state = 0;
 	}
+}
+
+void tjrc_wireless_sendImage(uint8_t* image, uint8_t threshold)
+{
+    uint8_t imggg[120];
+    uint8_t imggg2[120];
+    uint8_t imggg3[120];
+    int32_t mmm=0;
+
+   for(int j=0;j<120;j++)
+   {
+       if(image[mmm*120+j]>threshold) imggg[j] = 0;
+       else imggg[j] = 1;
+       for (mmm = 1; mmm < 31; mmm++)
+       {
+           if(image[mmm*120+j]>threshold) imggg[j] = (imggg[j] << 1) + 0;
+           else imggg[j] = (imggg[j] << 1) + 1;
+       }
+       if(mmm==31)mmm=0;
+       printf("%x ",imggg[j]);
+   }
+   mmm=31;
+   for(int j=0;j<120;j++)
+   {
+       if(image[mmm*120+j]>threshold) imggg2[j] = 0;
+       else imggg2[j] = 1;
+       for (mmm = 32; mmm < 62; mmm++)
+       {
+           if(image[mmm*120+j]>threshold) imggg2[j] = (imggg2[j] << 1) + 0;
+           else imggg2[j] = (imggg2[j] << 1) + 1;
+       }
+       if(mmm==62)mmm=31;
+       printf("%x ",imggg2[j]);
+   }
+    mmm=62;
+   for(int j=0;j<120;j++)
+   {
+       if(image[mmm*120+j]>threshold) imggg3[j] = 0;
+       else imggg3[j] = 1;
+       for (mmm = 63; mmm < 80; mmm++)
+       {
+           if(image[mmm*120+j]>threshold) imggg3[j] = (imggg3[j] << 1) + 0;
+           else imggg3[j] = (imggg3[j] << 1) + 1;
+       }
+       if(mmm==80)mmm=62;
+       printf("%x ",imggg3[j]);
+   }
+   printf("\r\n");
 }

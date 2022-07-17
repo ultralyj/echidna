@@ -17,7 +17,7 @@
 #include "tjrc_algorithm.h"
 
 void tjrc_wireless_recCallBack(void);
-
+void tjrc_wireless_sendImage(uint8_t* image, uint8_t threshold);
 
 
 #endif

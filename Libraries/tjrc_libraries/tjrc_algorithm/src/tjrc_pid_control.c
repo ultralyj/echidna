@@ -1,6 +1,3 @@
-
-
-
 /**
  * @file control.c
  * @author YYYDS team (Sangday)
@@ -13,9 +10,16 @@
  */
 
 #include <tjrc_pid_control.h>
-extern uint8_t steer_direct, run_direct;
+extern uint8_t steer_direct;
 
-float Angle_zero = -0.08f;  //平衡角度
+/* 速度环使能标志变量 */
+const uint8_t speedLoop_enable = 1;
+/* 后轮驱动使能标志变量 */
+const uint8_t drive_enable = 1;
+/* 转向控制使能标志变量 */
+const uint8_t turn_enable = 1;
+
+float Angle_zero = -0.074f;  //平衡角度
 
 /*******************直立环***********************************/
 
@@ -24,7 +28,7 @@ float Angle_zero = -0.08f;  //平衡角度
  * 
  */
 float angle_kp = 250000;
-float angle_kd = 18000;
+float angle_kd = 15000;
 float angle_ki = 1500;
 const float Angle_Integral_Max = 0.5;
 
@@ -59,9 +63,9 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot)
  * @brief 速度环PID参数
  * 
  */
-double V_S_Kp = -0.0000033;
-double V_S_Ki = 0.015;
-double V_S_Kd = 1.0;
+double V_S_Kp = -0.000016;
+double V_S_Ki = 0.010;
+double V_S_Kd = 0.15;
 const double V_S_Integral_Max = 0.01;
 
 /**
@@ -159,7 +163,9 @@ int32_t tjrc_pid_drive(float speed)
  **
  **********************************************************/
 
-float direct_kp = 300;
+float direct_target = 0;
+
+float direct_kp = 200;
 float direct_ki = 5;
 float direct_kd = 8;
 float Direct_Integral_Max = 1;
@@ -171,7 +177,7 @@ float Direct_Integral_Max = 1;
 float Turn_out(float angle_kalman, float angle_dot)
 {
     static float Turn_delta = 0;
-    static float direct_target = 0, direct_bias_pid = 0;
+    static float direct_bias_pid = 0;
     static float last_Turn_delta = 0;
     static float direct_integral = 0;
 
@@ -194,7 +200,7 @@ float Turn_out(float angle_kalman, float angle_dot)
     /* 获取角度偏移量（IMU测得角度与目标角度之差） */
     float angle_bias = angle_kalman - Angle_zero;
     /* 若角度偏移过大，动量轮难以调节，则使用舵机调节 */
-    if(f_Abs(angle_bias) > 0.01f)
+    if(f_Abs(angle_bias) > 0.015f)
     {
 
         /* 计算积分量并限幅 */
@@ -251,4 +257,97 @@ float tjrc_drive_getSpeed(void)
     speed_enc1 = ((1 - enc1_fade_coe) * speed_enc1_last + enc1_fade_coe * speed_enc1);
     speed_enc1_last = speed_enc1;
     return speed_enc1;
+}
+
+
+void tjrc_motionControl(void)
+{
+    extern float Angle_zero;
+    static int32_t motor_enable;
+    /* 速度环分频变量：1/20，后轮驱动分频：1/5，转向分频：1/2 */
+    static uint8_t speedLoop_cnt = 0, drive_cnt = 0, turn_cnt = 0;
+    /* 卡尔曼滤波初始化计数器 */
+    static int32_t kalman_initCnt = 0;
+    /* 函数中间参数传递变量 */
+    static float b_angle_delta = 0.0f;
+    static float b_angle_kalman = 0.0f , b_angle_dot = 0.0f;
+    static float b_turn_delta = 0.0f;
+
+    static float b_flyWheel_speed = 0.0f, b_drive_speed = 0.0f;
+
+    /* PWM输出变量 */
+    int flywheel_pwmOut = 0, drive_pwmOut = 0;
+    /* 特别注意：等待IMU角度稳定后(约200*8ms=1.6s)再开启电机 */
+    if (kalman_initCnt > 200 && motor_enable == 0)
+    {
+        motor_enable = 1;
+        IfxPort_setPinHigh(FLYWHEEL_MOTOR_EN_PIN);
+        kalman_initCnt = 0;
+    }
+    else
+    {
+        kalman_initCnt++;
+    }
+    /* 获取IMU信息，进行卡尔曼滤波，再输入到直立环PID得到动量轮PWM输出 */
+    tjrc_getAngle_kalman(&b_angle_kalman, &b_angle_dot); //得到计算的初始角度
+    flywheel_pwmOut = tjrc_pid_balance(b_angle_kalman, b_angle_dot);
+
+    /* 在电机使能的状态下，平行处理动量轮速度环，后轮驱动和舵机 */
+    if (motor_enable==1)
+    {
+        /* 动量轮速度环（1/20） */
+        if (speedLoop_enable)
+        {
+            if (speedLoop_cnt == 10)
+            {
+                speedLoop_cnt = 0;
+                b_flyWheel_speed = tjrc_flyWheel_getSpeed();
+                b_angle_delta = tjrc_pid_speedLoop(b_flyWheel_speed);
+                uint8_t str[30];
+                sprintf((char*)str,"%.04f,%.04f\n",b_angle_kalman,Angle_zero);
+                tjrc_asclin1_sendStr(str);
+
+                //sprintf((char*)str,"A0:%.03f AK:%.03f ",Angle_zero,b_angle_kalman);
+                //tjrc_st7735_dispStr612(0,116,(uint8_t*)str,RGB565_BLUE);
+            }
+            speedLoop_cnt++;
+        }
+
+        /* 舵机方向（1/2） */
+        if (turn_enable)
+        {
+            if (turn_cnt == 2)
+            {
+                turn_cnt = 0;
+                b_turn_delta = Turn_out(b_angle_kalman, b_angle_dot);
+            }
+            turn_cnt++;
+        }
+        /* 后轮驱动（1/5） */
+        if (drive_enable)
+        {
+            if (drive_cnt == 5)
+            {
+                drive_cnt = 0;
+                b_drive_speed = tjrc_drive_getSpeed();
+                extern float target_speed;
+                drive_pwmOut = tjrc_pid_drive(b_drive_speed);
+                tjrc_driveMotor_pwm(drive_pwmOut);
+            }
+            drive_cnt++;
+        }
+
+        /* 偏移角过大，停转保护 */
+        if (b_angle_kalman > 0.35 || b_angle_kalman < -0.6 || fabs(b_flyWheel_speed) > 20000)
+        {
+            flywheel_pwmOut = 0;
+            motor_enable = -1;
+            IfxPort_setPinLow(FLYWHEEL_MOTOR_EN_PIN);
+        }
+        extern float Angle_zero;
+        Angle_zero += b_angle_delta;                         //叠加串联输出
+        flywheel_pwmOut = s32_AmpConstrain(-9000, 9000, flywheel_pwmOut); //平衡环限幅
+        tjrc_flyWheelMotor_pwm(flywheel_pwmOut);
+    }
+
 }

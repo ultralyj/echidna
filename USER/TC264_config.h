@@ -17,11 +17,15 @@
 
 /* 禁用IMU及其相关线程！ */
 #define IMU_BANNED 0
+
 /* 禁用摄像头及其相关线程！ */
 #define CAMERA_BANNED 1
 /* 使用RT-Thread 自带控制台 */
 #define USE_FINSH_THREAD 0
 /* 使用有源蜂鸣器 */
 #define ACTIVE_BUZZER
+/* 是否开启全局静音 */
+#define BEEP_MUTE 0
 
+#define USE_SOFTWATE_I2C 1
 #endif

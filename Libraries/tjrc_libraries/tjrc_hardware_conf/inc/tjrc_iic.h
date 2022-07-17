@@ -16,6 +16,8 @@
 #include "rtthread.h"
 #include "stdint.h"
 
+#if !USE_SOFTWATE_I2C
 void tjrc_setIic(void);
+#endif
 
 #endif /* LIBRARIES_TJRC_LIBRARIES_TJRC_IIC_H_ */

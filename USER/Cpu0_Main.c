@@ -22,9 +22,10 @@ int main(void)
 {
     extern rt_sem_t imu_irq_sem;
     extern rt_sem_t camera_irq_sem;
+    extern rt_sem_t camera_procCplt_sem;
     imu_irq_sem = rt_sem_create("basem", 0, RT_IPC_FLAG_FIFO);
     camera_irq_sem = rt_sem_create("casem", 0, RT_IPC_FLAG_FIFO);
-
+    camera_procCplt_sem = rt_sem_create("ccpltm", 0, RT_IPC_FLAG_FIFO);
     /* 配置片上外设和片外模块 */
     tjrc_setHardware();
     tjrc_setPeripherals();
@@ -38,7 +39,7 @@ int main(void)
 
     /* 发送内核同步信号 */
     IfxCpu_emitEvent(&g_cpuSyncEvent);
-    IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
+    //IfxCpu_waitEvent(&g_cpuSyncEvent, 0xFFFF);
 
     /* 主循环 */
     while(1)

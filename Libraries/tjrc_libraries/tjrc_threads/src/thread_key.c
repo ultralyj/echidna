@@ -29,7 +29,7 @@ void tjrc_thread_key_init(void)
     key2_sem = rt_sem_create("k2sem", 0, RT_IPC_FLAG_FIFO);
     key3_sem = rt_sem_create("k3sem", 0, RT_IPC_FLAG_FIFO);
     /* 创建，并运行按键扫描线程 */
-    key_tid = rt_thread_create("key", tjrc_thread_key_entry, RT_NULL, 256, 5, 2);
+    key_tid = rt_thread_create("key", tjrc_thread_key_entry, RT_NULL, 256, 5, 1);
     if (key_tid != RT_NULL)
     {
         rtt_res = rt_thread_startup(key_tid);

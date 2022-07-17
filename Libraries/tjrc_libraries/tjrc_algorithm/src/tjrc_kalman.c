@@ -12,7 +12,7 @@
 #include "tjrc_kalmam.h"
 
 static void tjrc_kalman(float angle_m, float gyro_m , float* angle_kalman,float*angle_dot);
-
+float angleRaw;
 /**
  * @brief 采集IMU数据，对IMU数据进行换算，最终使用卡尔曼滤波解算姿态信息
  * 
@@ -30,7 +30,7 @@ void tjrc_getAngle_kalman(float* angle_kalman, float* angle_dot)
     tjrc_icm20602_getGyro();
 
     /* 对原始数据进行换算 */
-	float angleRaw = (float) icm_acc_z/4096;
+	angleRaw = (float) icm_acc_z/4096;
 	Gyro_Speed= -(float)((float)icm_gyro_y*2000/(32768) )*(float)Gyro_Parameter;
 	Gyro_Speed_X=-(float)((float)icm_gyro_x*2000/(32768) )*(float)Gyro_Parameter;
 
@@ -39,7 +39,7 @@ void tjrc_getAngle_kalman(float* angle_kalman, float* angle_dot)
 }
 
 /***********************卡尔曼滤波参数*************************/
-const float      dt = 0.0074;                       //0.00568
+const float     dt = 0.0074;                       //0.00568
 const float     Q_angle = 0.0005;                   //角度方差0.0057
 float           Q_gyro  = 0.000003;                 //角速度方差
 float           R_angle = 0.02;                     //测量噪声的方差

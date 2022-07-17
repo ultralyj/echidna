@@ -11,6 +11,7 @@
 
 #include "tjrc_servo.h"
 
+uint8_t servo_armed = 0;
 /**
  * @brief 设置舵机角度
  * @param servoAngle (float32)从-90到90度，舵机的旋转角度
@@ -20,6 +21,8 @@ float32 tjrc_servo_setAngle(float servoAngle)
 {
     const float SERVO_OFFSET = 0;
     static float servoAngleRe = 0.00f;
+    if(!servo_armed)
+        return -1000.0f;
     if (servoAngle >= -90.0f && servoAngle <= 90.0f)
     {
         /* 0.5 - 2.5 250 - 1250 */

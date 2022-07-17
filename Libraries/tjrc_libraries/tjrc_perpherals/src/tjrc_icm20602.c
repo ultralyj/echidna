@@ -10,14 +10,14 @@
  */
 
 #include "tjrc_icm20602.h"
-
+#if !USE_SOFTWATE_I2C
 extern IfxI2c_I2c i2c0_Handler;
 
 /**
  * @brief i2c设备MPU6050句柄
  */
 IfxI2c_I2c_Device icm20602_Handler;
-
+#endif
 /**
  * @brief 加速度计，陀螺仪原始数据的全局变量
  */
@@ -29,13 +29,15 @@ static uint8_t tjrc_icm20602_readByte(uint8_t regAddr);
 
 void tjrc_setIcm20602(void)
 {
+#if !USE_SOFTWATE_I2C
     /* 配置ICM20602设备句柄 */
     icm20602_Handler.i2c = &i2c0_Handler;
     icm20602_Handler.deviceAddress = ICM20602_DEV_ADDR << 1;
-
+#endif
     if(tjrc_icm20602_readByte(ICM20602_WHO_AM_I)!=0x12)
     {
         rt_kprintf("[icm20602*]cannot find imu\r\n");
+        while(1);
     }
     rt_kprintf("[icm20602]detect imu: icm20602\r\n");
     /* 解除休眠状态 */
@@ -64,14 +66,16 @@ void tjrc_setIcm20602(void)
 void tjrc_icm20602_getAccel(void)
 {
     uint8_t dat[6];
-
+#if USE_SOFTWATE_I2C
+    simiic_read_regs(ICM20602_DEV_ADDR, ICM20602_ACCEL_XOUT_H, dat, 6);
+#else
     dat[0] = tjrc_icm20602_readByte(ICM20602_ACCEL_XOUT_H);
     dat[1] = tjrc_icm20602_readByte(ICM20602_ACCEL_XOUT_L);
     dat[2] = tjrc_icm20602_readByte(ICM20602_ACCEL_YOUT_H);
     dat[3] = tjrc_icm20602_readByte(ICM20602_ACCEL_YOUT_L);
     dat[4] = tjrc_icm20602_readByte(ICM20602_ACCEL_ZOUT_H);
     dat[5] = tjrc_icm20602_readByte(ICM20602_ACCEL_ZOUT_L);
-
+#endif
     icm_acc_x = (int16_t)(((uint16_t)dat[0]<<8 | dat[1]));
     icm_acc_y = (int16_t)(((uint16_t)dat[2]<<8 | dat[3]));
     icm_acc_z = (int16_t)(((uint16_t)dat[4]<<8 | dat[5]));
@@ -81,14 +85,16 @@ void tjrc_icm20602_getAccel(void)
 void tjrc_icm20602_getGyro(void)
 {
     uint8_t dat[6];
-
+#if USE_SOFTWATE_I2C
+    simiic_read_regs(ICM20602_DEV_ADDR, ICM20602_GYRO_XOUT_H, dat, 6);
+#else
     dat[0] = tjrc_icm20602_readByte(ICM20602_GYRO_XOUT_H);
     dat[1] = tjrc_icm20602_readByte(ICM20602_GYRO_XOUT_L);
     dat[2] = tjrc_icm20602_readByte(ICM20602_GYRO_YOUT_H);
     dat[3] = tjrc_icm20602_readByte(ICM20602_GYRO_YOUT_L);
     dat[4] = tjrc_icm20602_readByte(ICM20602_GYRO_ZOUT_H);
     dat[5] = tjrc_icm20602_readByte(ICM20602_GYRO_ZOUT_L);
-
+#endif
     icm_gyro_x = (int16_t)(((uint16_t)dat[0]<<8 | dat[1]));
     icm_gyro_y = (int16_t)(((uint16_t)dat[2]<<8 | dat[3]));
     icm_gyro_z = (int16_t)(((uint16_t)dat[4]<<8 | dat[5]));
@@ -102,6 +108,9 @@ void tjrc_icm20602_getGyro(void)
  */
 static void tjrc_icm20602_writeByte(uint8_t regAddr, uint8_t dataBuff)
 {
+#if USE_SOFTWATE_I2C
+    simiic_write_reg(ICM20602_DEV_ADDR, regAddr, dataBuff);
+#else
     /* 设置一个超时变量防止卡死在while里 */
     uint32_t timeOut = 0;
     volatile uint8_t writebuff[2];
@@ -109,7 +118,7 @@ static void tjrc_icm20602_writeByte(uint8_t regAddr, uint8_t dataBuff)
     writebuff[1] = dataBuff;
     while (timeOut++ < 500 && IfxI2c_I2c_write(&icm20602_Handler, (uint8_t *)&writebuff, 2) == IfxI2c_I2c_Status_nak)
         ;
-
+#endif
 }
 
 /**
@@ -120,12 +129,16 @@ static void tjrc_icm20602_writeByte(uint8_t regAddr, uint8_t dataBuff)
  */
 static uint8_t tjrc_icm20602_readByte(uint8_t regAddr)
 {
+#if USE_SOFTWATE_I2C
+    return simiic_read_reg(ICM20602_DEV_ADDR, regAddr);
+#else
     uint32_t timeOut = 0;
-    volatile uint8_t writeBuff = regAddr, readBuff = 0x00;
+    uint8_t writeBuff = regAddr, readBuff = 0x00;
     while (timeOut++ < 500 && IfxI2c_I2c_write(&icm20602_Handler, &writeBuff, 1) == IfxI2c_I2c_Status_nak)
         ;
     timeOut = 0;
     while (timeOut++ < 500 && IfxI2c_I2c_read(&icm20602_Handler, &readBuff, 1) == IfxI2c_I2c_Status_nak)
         ;
     return readBuff;
+#endif
 }

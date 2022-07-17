@@ -18,7 +18,7 @@
  */
 #define ASC_TX_BUFFER_SIZE 256
 #define ASC_RX_BUFFER_SIZE 256
-#define ASC1_BUFFER_SIZE 16
+#define ASC1_BUFFER_SIZE 256
 #define ASC3_BUFFER_SIZE 16
 
 IfxAsclin_Asc asclin0_Handler;
