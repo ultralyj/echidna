@@ -126,7 +126,7 @@ float target_speed = 0;
  * 
  */
 float Dr_kp = 2;
-float Dr_ki = 2;
+float Dr_ki = 1;
 float Dr_kd = 0.35;
 const float Max_Dr_Integral = 4000;
 
@@ -151,7 +151,7 @@ int32_t tjrc_pid_drive(float speed)
     last_duty = duty;
     last_Dr_Bias = Dr_Bias;
     /* 输出限幅 */
-    duty = int16_t_Constrain(duty,-9000,9000);
+    duty = int16_t_Constrain(duty,-4000,4000);
     /* 输出占空比 */
     return duty;
 }
@@ -169,40 +169,25 @@ float direct_kp = 200;
 float direct_ki = 5;
 float direct_kd = 8;
 float Direct_Integral_Max = 1;
+
+
 /**
  * @brief 
  * 
  * @return float 舵机控制量输出
  */
-float Turn_out(float angle_kalman, float angle_dot)
+float tjrc_pid_servo_balance(float angle_kalman, float angle_dot)
 {
     static float Turn_delta = 0;
     static float direct_bias_pid = 0;
     static float last_Turn_delta = 0;
     static float direct_integral = 0;
 
-    /* 远程目标角度调节 */
-    if (steer_direct == 0 || steer_direct == 1)
-    {
-        if (steer_direct == 0)
-        {
-            direct_target += 5;
-        }
-        else
-        {
-            direct_target -= 5;
-        }
-        steer_direct = -1;
-        Turn_delta = 0;
-        // Turn_delta = direct*kkp*drive_encoder;//计算得到此次的压弯角度
-    }
-
     /* 获取角度偏移量（IMU测得角度与目标角度之差） */
     float angle_bias = angle_kalman - Angle_zero;
     /* 若角度偏移过大，动量轮难以调节，则使用舵机调节 */
     if(f_Abs(angle_bias) > 0.015f)
     {
-
         /* 计算积分量并限幅 */
         direct_integral += angle_bias;
         direct_integral = float_Constrain(direct_integral, -Direct_Integral_Max, Direct_Integral_Max);
@@ -215,15 +200,34 @@ float Turn_out(float angle_kalman, float angle_dot)
     {
         direct_bias_pid = 0.0f;
     }
-    float direct = direct_target + direct_bias_pid;
-    direct = float_Constrain(direct, -18, 18);
-    tjrc_servo_setAngle(direct);
-
 
     Turn_delta -= last_Turn_delta; //减去上次的设定
     last_Turn_delta = Turn_delta;
     Turn_delta /= 2; //由于平衡环频率是方向环两倍，分两次叠加，降低突变影响？
     return direct_bias_pid;
+}
+
+float servo_kp = 0.6f;
+float servo_ki = 0.0f;
+float servo_kd = 0.0f;
+float servo_Integral_Max = 1.0f;
+float tjrc_pid_servo_trace(float mid, float slope)
+{
+    float mid_error;
+    static float servo_integral = 0.0f;
+    static float servo_last = 0.0f;
+    float servo_pid = 0.0f;
+
+    mid_error = mid;
+    /* 计算积分量并限幅 */
+    servo_integral += mid_error;
+    servo_integral = float_Constrain(servo_integral, -servo_Integral_Max, servo_Integral_Max);
+
+    /* 直接法PID */
+    servo_pid = (float)(servo_kp * mid_error);
+    servo_pid = 0.5f*servo_pid+0.5f*servo_last;
+    servo_last = servo_pid;
+    return servo_pid;
 }
 
 float enc0_fade_coe = 0.5f;
@@ -271,7 +275,7 @@ void tjrc_motionControl(void)
     /* 函数中间参数传递变量 */
     static float b_angle_delta = 0.0f;
     static float b_angle_kalman = 0.0f , b_angle_dot = 0.0f;
-    static float b_turn_delta = 0.0f;
+    static float b_turn_delta = 0.0f, b_turn_target = 0.0f;
 
     static float b_flyWheel_speed = 0.0f, b_drive_speed = 0.0f;
 
@@ -282,6 +286,12 @@ void tjrc_motionControl(void)
     {
         motor_enable = 1;
         IfxPort_setPinHigh(FLYWHEEL_MOTOR_EN_PIN);
+        /* sw3: 固定速度调试 */
+        extern uint8_t switch_value;
+        if(switch_value & SWITCH3)
+        {
+            target_speed=200;
+        }
         kalman_initCnt = 0;
     }
     else
@@ -313,13 +323,36 @@ void tjrc_motionControl(void)
             speedLoop_cnt++;
         }
 
-        /* 舵机方向（1/2） */
+        /* 舵机方向（1/4） */
         if (turn_enable)
         {
-            if (turn_cnt == 2)
+            if (turn_cnt == 4)
             {
                 turn_cnt = 0;
-                b_turn_delta = Turn_out(b_angle_kalman, b_angle_dot);
+                /* 更新舵机辅助平衡偏置角 */
+                b_turn_delta = tjrc_pid_servo_balance(b_angle_kalman, b_angle_dot);
+                /* 更新舵机目标偏置角（摄像头信息） */
+                extern float camera_slope;
+                extern float camera_pixelError;
+                b_turn_target = -tjrc_pid_servo_trace(camera_pixelError,camera_slope);
+                printf("[servo]%f,%f,%f\r\n",camera_slope,camera_pixelError,b_turn_target);
+                /* 远程目标角度调节 */
+                if (steer_direct == 0 || steer_direct == 1)
+                {
+                    if (steer_direct == 0)
+                    {
+                        direct_target += 5;
+                    }
+                    else
+                    {
+                        direct_target -= 5;
+                    }
+                    steer_direct = -1;
+                    // Turn_delta = direct*kkp*drive_encoder;//计算得到此次的压弯角度
+                }
+                float direct = direct_target + b_turn_target;
+                direct = float_Constrain(direct, -18, 18);
+                tjrc_servo_setAngle(direct);
             }
             turn_cnt++;
         }

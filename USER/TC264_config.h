@@ -19,7 +19,7 @@
 #define IMU_BANNED 0
 
 /* 禁用摄像头及其相关线程！ */
-#define CAMERA_BANNED 1
+#define CAMERA_BANNED 0
 /* 使用RT-Thread 自带控制台 */
 #define USE_FINSH_THREAD 0
 /* 使用有源蜂鸣器 */

@@ -48,7 +48,7 @@ void tjrc_thread_run_init(void)
 
     rt_err_t rtt_res;
     Run_sem = rt_sem_create("Run_sem", 0, RT_IPC_FLAG_FIFO);
-    Run_tid = rt_thread_create("run", Run_entry, RT_NULL, 256, 4, 3);
+    Run_tid = rt_thread_create("run", Run_entry, RT_NULL, 256, 3, 2);
     if (Run_tid != RT_NULL)
     {
         rtt_res = rt_thread_startup(Run_tid);

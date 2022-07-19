@@ -29,7 +29,7 @@ void tjrc_thread_camera_init(void)
     rt_kprintf("[WARNNING]camera is banned!!\r\n");
 #else
     rt_err_t rtt_res;
-    tid_camera = rt_thread_create("camera",thread_camera_entry, RT_NULL,256,5,2);
+    tid_camera = rt_thread_create("camera",thread_camera_entry, RT_NULL,256,5,5);
     if(tid_camera != RT_NULL)
     {
         rtt_res = rt_thread_startup(tid_camera);
@@ -51,9 +51,8 @@ static void thread_camera_entry(void *param)
         rt_thread_mdelay(30);
 //        if(rt_sem_take(camera_procCplt_sem, RT_WAITING_FOREVER) == RT_EOK)
 //        {
-            /* 翻转camera指示灯 */
-
-            //printf("[camera]get\r\n");
+//            /* 翻转camera指示灯 */
+//            //printf("[camera]get\r\n");
 //            /* 拍摄当前图像 */
 //            uint8_t extern sdmmc_detected_flag;
 //            if(sdmmc_detected_flag)
