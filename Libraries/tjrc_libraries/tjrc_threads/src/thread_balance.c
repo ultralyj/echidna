@@ -81,8 +81,6 @@ static void Run_entry(void *parameter)
  */
 static void balance_entry(void *parameter)
 {
-
-    rt_tick_t timeStamp_start=0,timeStamp_end=0;
     while (1)
     {
         /* 当IMU发出中断信号，依次进行滤波与串级PID */

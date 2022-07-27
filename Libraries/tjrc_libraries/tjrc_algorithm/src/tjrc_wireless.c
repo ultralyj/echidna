@@ -119,6 +119,12 @@ void tjrc_wireless_recCallBack(void)
 	}
 }
 
+/**
+ * @brief 
+ * 
+ * @param image 
+ * @param threshold 
+ */
 void tjrc_wireless_sendImage(uint8_t* image, uint8_t threshold)
 {
     uint8_t imggg[120];

@@ -193,6 +193,8 @@ void tjrc_st7735_dispImage_gray(uint8_t *image, uint16_t width, uint16_t height,
                 color_565 = (uint16_t)(image[i * width + j]>>3)<<11;
                 color_565 += (uint16_t)(image[i * width + j]>>2)<<5;
                 color_565 += (uint16_t)(image[i * width + j]>>3);
+                if(image[i * width + j] == 0x33)
+                    color_565 = RGB565_RED;
                 st7735_WR_DATA(color_565);
             }
         }

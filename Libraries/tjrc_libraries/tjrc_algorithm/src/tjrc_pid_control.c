@@ -69,8 +69,9 @@ double V_S_Kd = 0.15;
 const double V_S_Integral_Max = 0.01;
 
 /**
- * @brief 串联的速度环，增量式PID控制，平滑到20个平滑周期
- *
+ * @brief 串联的速度环，增量式PID控制，平滑到10个平滑周期
+ * 
+ * @param _V_S_Bias 动量轮编码器的速度信息
  * @return float PID控制量输出
  */
 float tjrc_pid_speedLoop(float _V_S_Bias)
@@ -104,8 +105,6 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
 
     /* 积分限幅 */
     V_S_Integral = float_Constrain(V_S_Integral, -V_S_Integral_Max, V_S_Integral_Max);
-//        V_S_Integral=0;  //不使用积分
-//        V_S_Diff = 0;//不使用微分
 
     /* 结果加和并且进行平滑处理 */
     float Angle_delta = (double)(Angle_Diff + V_S_Diff + V_S_Integral) / 20.0;
@@ -133,6 +132,7 @@ const float Max_Dr_Integral = 4000;
 /**
  * @brief 直接法PID控制后轮驱动速度环
  * 
+ * @param speed 后轮驱动电机编码器的速度信息
  * @return int32_t PWM输出（-50~50）
  */
 int32_t tjrc_pid_drive(float speed)
@@ -172,9 +172,11 @@ float Direct_Integral_Max = 1;
 
 
 /**
- * @brief 
+ * @brief 舵机协同平衡pid
  * 
- * @return float 舵机控制量输出
+ * @param angle_kalman 卡尔曼滤波后的姿态角
+ * @param angle_dot 姿态角微分
+ * @return float 舵机协同平衡的偏置角
  */
 float tjrc_pid_servo_balance(float angle_kalman, float angle_dot)
 {
@@ -211,6 +213,13 @@ float servo_kp = 0.6f;
 float servo_ki = 0.0f;
 float servo_kd = 0.0f;
 float servo_Integral_Max = 1.0f;
+/**
+ * @brief 舵机主方向控制pid
+ * 
+ * @param mid 中线偏移量
+ * @param slope 中线斜率
+ * @return float 舵机角度
+ */
 float tjrc_pid_servo_trace(float mid, float slope)
 {
     float mid_error;

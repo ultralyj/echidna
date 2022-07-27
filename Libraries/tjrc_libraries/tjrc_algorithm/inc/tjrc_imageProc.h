@@ -1,13 +1,23 @@
+/**
+ * @file tjrc_imageProc.h
+ * @author YYYDS team. (1951578@tongji.edu.cn)
+ * @brief 
+ * @version 2.6.1
+ * @date 2022-07-28
+ * 
+ * @copyright Copyright (c) 2022
+ * 
+ */
 
 #ifndef __TJRC_IMAGEPROC_H__
 #define __TJRC_IMAGEPROC_H__
 
-#include "stdio.h"
-#include "stdint.h"
-#include "stdint.h"
-#include "math.h"
-
+#include <stdio.h>
+#include <stdint.h>
+#include <math.h>
+#include <stdarg.h>
 #include "tjrc_algorithm.h"
+
 /**
  * @brief 图像宽度与高度
  */
@@ -44,6 +54,10 @@
 
 
 #define LINE_INFO_MAX_PIXEL 80
+
+#define tjrc_abs(X) (X >= 0 ? X : -X)
+
+
 typedef struct
 {
     uint8_t pixel_cnt;
@@ -96,5 +110,12 @@ void tjrc_sobel_autoThreshold(const uint8_t* imageIn, uint8_t* imageOut, uint16_
 void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out);
 void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_info* inflection_info_out);
 void tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflection_info_in);
-void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in);
+void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflection_info* inflection_info_in);
+
+/* 赛道元素判断函数组 */
+uint8_t check_gridLine(const uint8_t* image);
+
+/* 图像log信息调试函数（一般为空，调试时正常输出） */
+int tjrc_log(char* format, ...);
+
 #endif // !__TJRC_IMAGEPROC_H__
