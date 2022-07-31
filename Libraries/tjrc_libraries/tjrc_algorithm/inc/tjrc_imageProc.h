@@ -30,6 +30,8 @@
  */
 #define IMAGE_COL_KEEPOUT_PIXEL 3
 
+#define IMAGE_ROW_KEEPOUT_PIXEL 3
+
 /**
  * @brief 图像感兴趣的高度（0-i）
  */

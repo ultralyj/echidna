@@ -27,7 +27,7 @@ uint8_t tjrc_binarization_otsu(const uint8_t *image, uint16_t col, uint16_t row)
     static uint32_t pixelCount[GrayScale];
     static float pixelPro[GrayScale];
     /* 阈值限幅 */
-    uint16_t th_max = 65, th_min = 20;
+    uint16_t th_max = 150, th_min = 20;
     uint32_t i, j, pixelSum = col * row;
     uint8_t threshold = 0;
     for (i = 0; i < GrayScale; i++)
@@ -201,13 +201,16 @@ void tjrc_sobel_autoThreshold(const uint8_t *imageIn, uint8_t *imageOut, uint16_
             /* 使用像素点邻域内像素点之和的一定比例    作为阈值  */
             temp[3] = (int32_t)imageIn[(i - 1) * width + j - 1] + (int32_t)imageIn[(i - 1) * width + j] + (int32_t)imageIn[(i - 1) * width + j + 1] + (int32_t)imageIn[i * width + j - 1] + (int32_t)imageIn[i * width + j] + (int32_t)imageIn[i * width + j + 1] + (int32_t)imageIn[(i + 1) * width + j - 1] + (int32_t)imageIn[(i + 1) * width + j] + (int32_t)imageIn[(i + 1) * width + j + 1];
 
-            if (temp[0] > temp[3] / 10.0f)
+            if (temp[0] > temp[3] / 20.0f)
             {
-                imageOut[i * width + j] = 0xff;
+                imageOut[i * width + j] = IMAGE_COLOR_BLACK;
+                imageOut[i * width + j + 1] = IMAGE_COLOR_BLACK;
+                imageOut[i * width + j - 1] = IMAGE_COLOR_BLACK;
+
             }
             else
             {
-                imageOut[i * width + j] = 0x00;
+                imageOut[i * width + j] = IMAGE_COLOR_WHITE;
             }
         }
     }

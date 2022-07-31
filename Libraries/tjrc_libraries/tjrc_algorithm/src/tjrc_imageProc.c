@@ -42,13 +42,14 @@ uint8_t* tjrc_imageProc(const uint8_t* image_p)
     static inflection_info inflections;
 
     /* 第一步：二值化 */
-    static uint8_t threshold_smooth = 30;
-    uint8_t threshold = tjrc_binarization_otsu(image_p, IMAGE_WIDTH, IMAGE_HEIGHT);
-    uint8_t threshold_bias = 10;
-    threshold += threshold_bias;
-    threshold_smooth = (uint8_t)(0.8*threshold_smooth+0.2*threshold);
-    //tjrc_log("[imp]threshold=%d(OTSU)\r\n", threshold);
-    tjrc_binarization_getBinImage(threshold, image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+//    static uint8_t threshold_smooth = 30;
+//    uint8_t threshold = tjrc_binarization_otsu(image_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+//    uint8_t threshold_bias = 7;
+//    threshold += threshold_bias;
+//    threshold_smooth = (uint8_t)(0.8*threshold_smooth+0.2*threshold);
+//    //printf("[imp]threshold=%d(OTSU)\r\n", threshold);
+//    tjrc_binarization_getBinImage(threshold_smooth, image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+    tjrc_sobel_autoThreshold(image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     /* 第二步：搜线，求拐点，补线 */
     if (check_gridLine(image_bin_p))
@@ -57,22 +58,26 @@ uint8_t* tjrc_imageProc(const uint8_t* image_p)
     }
     tjrc_imageProc_searchEdge_x(image_bin_p, &edge_line);
     tjrc_imageProc_fineInflection(&edge_line, &inflections);
-    tjrc_imageProc_patchLine(&edge_line, &inflections);
+    //tjrc_imageProc_patchLine(&edge_line, &inflections);
 
     /* 第三步：更新图像 */
     tjrc_imageProc_updateImage(image_bin_p, &edge_line, &inflections);
 
     /* 第四步：将中线信息存储到全局变量在内核0调用 */
-    for (uint8_t i = IMAGE_HEIGHT - 1; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - edge_line.pixel_cnt > i)
             continue;
         /* 绘制中线 */
         midline[i] = (edge_line.x_left[i] + edge_line.x_right[i]) / 2;
     }
-    /* 获得中线拟合斜率（正负90度）和中线二次加权平均偏移 */
-    camera_pixelError = weighted_line(midline, &edge_line);
-    camera_slope = fit_slope(midline, &edge_line);
+    /* 如果当前线数小于10，则判断为丢线，不更新输出 */
+    if(edge_line.pixel_cnt>10)
+    {
+        /* 获得中线拟合斜率（正负90度）和中线二次加权平均偏移 */
+        camera_pixelError = weighted_line(midline, &edge_line);
+        camera_slope = fit_slope(midline, &edge_line);
+    }
     return image_bin_p;
 }
 
@@ -97,7 +102,32 @@ void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
     uint8_t p_start = IMAGE_WIDTH / 2;
     uint8_t P_left_findEdgeCnt = 0;
     uint8_t P_right_findEdgeCnt = 0;
-    for (uint16_t i = IMAGE_HEIGHT - 1; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+
+    /* 微调起始搜线点 */
+    if(image_p[IMAGE_HEIGHT - 3][p_start]==IMAGE_COLOR_BLACK)
+    {
+        uint8_t p_start_bias = 0;
+        while(p_start_bias<IMAGE_WIDTH/2-IMAGE_COL_KEEPOUT_PIXEL)
+        {
+            p_start_bias++;
+            if(image_p[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL][p_start-p_start_bias]!=IMAGE_COLOR_BLACK)
+            {
+                p_start-=p_start_bias;
+                break;
+            }
+            if(image_p[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL][p_start+p_start_bias]!=IMAGE_COLOR_BLACK)
+            {
+                p_start+=p_start_bias;
+                break;
+            }
+        }
+        if(p_start_bias>=IMAGE_WIDTH/2-IMAGE_COL_KEEPOUT_PIXEL)
+        {
+            return;
+        }
+    }
+
+    for (uint16_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         /* 定义左右边界x坐标和中线坐标 */
         uint8_t p_left = p_start;
@@ -138,9 +168,7 @@ void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
         p_start = p_mid;
 
         /* 断线退出，判据：当本行中线为black且下行也为black退出循环 */
-        if (image_p[i][p_start] == IMAGE_COLOR_BLACK &&
-            image_p[i - 1][p_start] == IMAGE_COLOR_BLACK &&
-            i < IMAGE_HEIGHT - 20)
+        if (tjrc_abs(p_right - p_left)<=2&&i < IMAGE_HEIGHT - 20)
         {
             tjrc_log("[edge_x]line break row:%d\n", i);
             break;
@@ -310,11 +338,11 @@ void tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflect
     }
     /* 情况2：上方2拐点，两侧底部存在丢线：从底部左右补线 */
     if (inflection_info_in->findFlag == inflection_upper &&
-        line_info_out->x_left_findEdge[IMAGE_HEIGHT - 1] == 0 &&
-        line_info_out->x_right_findEdge[IMAGE_HEIGHT - 1] == 0)
+        line_info_out->x_left_findEdge[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL] == 0 &&
+        line_info_out->x_right_findEdge[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL] == 0)
     {
-        patchLine(inflection_info_in->y_upper_left, IMAGE_HEIGHT - 1, line_info_out->x_left);
-        patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT - 1, line_info_out->x_right);
+        patchLine(inflection_info_in->y_upper_left, IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);
+        patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
     }
 }
 
@@ -327,7 +355,7 @@ void tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflect
  */
 void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflection_info* inflection_info_in)
 {
-    for (uint8_t i = IMAGE_HEIGHT - 1; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - line_info_in->pixel_cnt > i)
             continue;
@@ -450,7 +478,7 @@ static float fit_slope(const uint8_t* line, line_info* line_info_in)
     float sum_xy = 0.0f, sum_xx = 0.0f;
     float sum_x = 0.0f, sum_y = 0.0f;
     uint8_t n = 0;
-    for (uint8_t i = IMAGE_HEIGHT - 1; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - line_info_in->pixel_cnt > i)
             break;
@@ -492,15 +520,21 @@ static float weighted_line(const uint8_t* line, line_info* line_info_in)
     /* 首次调用，生成权值表 */
     if (first)
     {
-        for (uint8_t i = IMAGE_HEIGHT - 1; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+        for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
         {
-            float w = -0.02 * (i - 40) * (i - 40) + 20;
-            weighted_table[i] = (w > 0) ? (uint8_t)w : 0;
+            if(i<IMAGE_HEIGHT&& i>=IMAGE_HEIGHT-20)
+                weighted_table[i]=40;
+            if(i<IMAGE_HEIGHT-20&& i>=IMAGE_HEIGHT-40)
+                weighted_table[i]=30;
+            if(i<IMAGE_HEIGHT-40&& i>=IMAGE_HEIGHT-60)
+                weighted_table[i]=20;
+            if(i<IMAGE_HEIGHT-60)
+                weighted_table[i]=10;
         }
         first = 0;
     }
     float lsum = 0.0f;
-    for (uint8_t i = IMAGE_HEIGHT - 1; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - line_info_in->pixel_cnt > i)
             break;
