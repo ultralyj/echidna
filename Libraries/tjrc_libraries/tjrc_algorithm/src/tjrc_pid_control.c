@@ -167,7 +167,7 @@ float direct_target = 0;
 
 float direct_kp = 200;
 float direct_ki = 5;
-float direct_kd = 8;
+float direct_kd = 100;
 float Direct_Integral_Max = 1;
 
 
@@ -268,7 +268,7 @@ float tjrc_drive_getSpeed(void)
 {
     static float speed_enc1_last = 0;
     float speed_enc1;
-    speed_enc1 = (float)tjrc_gpt12_getT6();
+    speed_enc1 = -(float)tjrc_gpt12_getT6();
     if(speed_enc1>60000)
         return 0;
     speed_enc1 = ((1 - enc1_fade_coe) * speed_enc1_last + enc1_fade_coe * speed_enc1);
@@ -395,9 +395,9 @@ void tjrc_motionControl(void)
             IfxPort_setPinLow(FLYWHEEL_MOTOR_EN_PIN);
         }
         extern float Angle_zero;
-        Angle_zero += b_angle_delta;                         //叠加串联输出
+        Angle_zero -= b_angle_delta;                         //叠加串联输出
         flywheel_pwmOut = s32_AmpConstrain(-9000, 9000, flywheel_pwmOut); //平衡环限幅
-        tjrc_flyWheelMotor_pwm(flywheel_pwmOut);
+        tjrc_flyWheelMotor_pwm(-flywheel_pwmOut);
     }
 
 }

@@ -45,25 +45,38 @@ void tjrc_thread_camera_init(void)
  */
 static void thread_camera_entry(void *param)
 {
+    static uint32_t cnt = 0;
+    uint8_t str_buff[40];
+    extern rt_sem_t key0_sem;
     while(1)
     {
         IfxPort_togglePin(CAMERA_LED);
         rt_thread_mdelay(30);
-//        if(rt_sem_take(camera_procCplt_sem, RT_WAITING_FOREVER) == RT_EOK)
-//        {
-//            /* 翻转camera指示灯 */
-//            //printf("[camera]get\r\n");
-//            /* 拍摄当前图像 */
-//            uint8_t extern sdmmc_detected_flag;
-//            if(sdmmc_detected_flag)
-//            {
-//                extern uint8_t MT9V03X_image_div4[MT9V03X_H*MT9V03X_W/4];
-//                tjrc_st7735_drawRectangle(0,154,4,4,RGB565_RED);
-//                sprintf((char*)str_buff,"tjrc/b%03d/c%05d.bmp",tjrc_conf_inf.boot_cnt,cnt);
-//                tjrc_fileIo_camera2bmp((char*)str_buff,(uint8_t*)MT9V03X_image[0]);
-//                tjrc_st7735_drawRectangle(0,154,4,4,RGB565_BLACK);
-//            }
-//        }
+        if(rt_sem_take(key0_sem, RT_WAITING_FOREVER) == RT_EOK)
+        {
+            if(1)
+            {
+                extern uint8_t camera_cplt_flag;
+                camera_cplt_flag = 0;
+                /* 翻转camera指示灯 */
+                //printf("[camera]get\r\n");
+                /* 拍摄当前图像 */
+                cnt++;
+                uint8_t extern sdmmc_detected_flag;
+                if(sdmmc_detected_flag)
+                {
+                    extern TJRC_CONFINO tjrc_conf_inf;
+                    extern uint8_t MT9V03X_image_div4[MT9V03X_H*MT9V03X_W/4];
+                    tjrc_st7735_drawRectangle(0,154,4,4,RGB565_RED);
+                    sprintf((char*)str_buff,"tjrc/b%03d/c%05d.bmp",tjrc_conf_inf.boot_cnt,cnt);
+                    tjrc_fileIo_camera2bmp((char*)str_buff,(uint8_t*)MT9V03X_image[0]);
+                    tjrc_st7735_drawRectangle(0,154,4,4,RGB565_BLACK);
+                    printf("cheese\r\n");
+                }
+                camera_cplt_flag = 1;
+            }
+
+        }
     }
 }
 

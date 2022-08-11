@@ -4,51 +4,51 @@
  * @brief 赛道巡线的核心包含图像处理主要功能函数
  * @version 2.6.1
  * @date 2022-07-28
- * 
+ *
  * @copyright Copyright (c) 2022
- * 
+ *
  */
 
 #include "tjrc_imageProc.h"
 
-
-static void patchLine(uint8_t y0, uint8_t y1, uint8_t* line_x_out);
-static float fit_slope(const uint8_t* line, line_info* line_info_in);
-static float weighted_line(const uint8_t* line, line_info* line_info_in);
+static void patchLine(uint8_t y0, uint8_t y1, uint8_t *line_x_out);
+static float fit_slope(const uint8_t *line, line_info *line_info_in);
+static float weighted_line(const uint8_t *line, line_info *line_info_in);
 
 /**
  * @brief 图像处理结果全局变量，用于传回cpu0进行运动学控制
- * 
+ *
  */
 float camera_slope = 0, camera_pixelError = 0;
 /**
  * @brief 二值化图像矩阵（二值化矩阵也将用于绘制边线，中线等信息）
  * 尺寸为120*80=9600Byte=9.375KB(x2)
- * 
+ *
  */
 uint8_t image_bin[IMAGE_HEIGHT][IMAGE_WIDTH];
 
 /**
- * @brief 
- * 
- * @param image_p 
- * @return uint8_t* 
+ * @brief
+ *
+ * @param image_p
+ * @return uint8_t*
  */
-uint8_t* tjrc_imageProc(const uint8_t* image_p)
+uint8_t *tjrc_imageProc(const uint8_t *image_p)
 {
-    uint8_t* image_bin_p = image_bin[0];
+    uint8_t *image_bin_p = image_bin[0];
     static uint8_t midline[IMAGE_HEIGHT];
     static line_info edge_line;
     static inflection_info inflections;
 
     /* 第一步：二值化 */
-//    static uint8_t threshold_smooth = 30;
-//    uint8_t threshold = tjrc_binarization_otsu(image_p, IMAGE_WIDTH, IMAGE_HEIGHT);
-//    uint8_t threshold_bias = 7;
-//    threshold += threshold_bias;
-//    threshold_smooth = (uint8_t)(0.8*threshold_smooth+0.2*threshold);
-//    //printf("[imp]threshold=%d(OTSU)\r\n", threshold);
-//    tjrc_binarization_getBinImage(threshold_smooth, image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+    //    static uint8_t threshold_smooth = 30;
+    //    uint8_t threshold = tjrc_binarization_otsu(image_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+    //    uint8_t threshold_bias = 7;
+    //    threshold += threshold_bias;
+    //    threshold_smooth = (uint8_t)(0.8*threshold_smooth+0.2*threshold);
+    //    //printf("[imp]threshold=%d(OTSU)\r\n", threshold);
+    //    tjrc_binarization_getBinImage(threshold_smooth, image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+    /* 针对弱光环境或者反光强烈情况使用sobel算子 */
     tjrc_sobel_autoThreshold(image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     /* 第二步：搜线，求拐点，补线 */
@@ -58,13 +58,13 @@ uint8_t* tjrc_imageProc(const uint8_t* image_p)
     }
     tjrc_imageProc_searchEdge_x(image_bin_p, &edge_line);
     tjrc_imageProc_fineInflection(&edge_line, &inflections);
-    //tjrc_imageProc_patchLine(&edge_line, &inflections);
+    // tjrc_imageProc_patchLine(&edge_line, &inflections);
 
     /* 第三步：更新图像 */
     tjrc_imageProc_updateImage(image_bin_p, &edge_line, &inflections);
 
     /* 第四步：将中线信息存储到全局变量在内核0调用 */
-    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - edge_line.pixel_cnt > i)
             continue;
@@ -72,7 +72,7 @@ uint8_t* tjrc_imageProc(const uint8_t* image_p)
         midline[i] = (edge_line.x_left[i] + edge_line.x_right[i]) / 2;
     }
     /* 如果当前线数小于10，则判断为丢线，不更新输出 */
-    if(edge_line.pixel_cnt>10)
+    if (edge_line.pixel_cnt > 10)
     {
         /* 获得中线拟合斜率（正负90度）和中线二次加权平均偏移 */
         camera_pixelError = weighted_line(midline, &edge_line);
@@ -87,13 +87,13 @@ uint8_t* tjrc_imageProc(const uint8_t* image_p)
  * @param image [in](uint8*)图像指针(IMAGE_HEIGHT*IMAGE_WIDTH)
  * @param line_info_out [out]边线信息结构体，存储边线横坐标，是否丢线等信息
  */
-void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
+void tjrc_imageProc_searchEdge_x(const uint8_t *image, line_info *line_info_out)
 {
     /* 二维数组重构，方便调用 */
-    uint8_t* image_p[IMAGE_HEIGHT];
+    uint8_t *image_p[IMAGE_HEIGHT];
     for (uint8_t i = 0; i < IMAGE_HEIGHT; i++)
     {
-        image_p[i] = (uint8_t*)&image[i * IMAGE_WIDTH];
+        image_p[i] = (uint8_t *)&image[i * IMAGE_WIDTH];
     }
     line_info_out->x_left_edgeCnt = 0;
     line_info_out->x_right_edgeCnt = 0;
@@ -103,31 +103,31 @@ void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
     uint8_t P_left_findEdgeCnt = 0;
     uint8_t P_right_findEdgeCnt = 0;
 
-    /* 微调起始搜线点 */
-    if(image_p[IMAGE_HEIGHT - 3][p_start]==IMAGE_COLOR_BLACK)
+    /* 微调起始搜线点，若起始点是黑线，向左右方向寻找第一个白点 */
+    if (image_p[IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL][p_start] == IMAGE_COLOR_BLACK)
     {
         uint8_t p_start_bias = 0;
-        while(p_start_bias<IMAGE_WIDTH/2-IMAGE_COL_KEEPOUT_PIXEL)
+        while (p_start_bias < IMAGE_WIDTH / 2 - IMAGE_COL_KEEPOUT_PIXEL)
         {
             p_start_bias++;
-            if(image_p[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL][p_start-p_start_bias]!=IMAGE_COLOR_BLACK)
+            if (image_p[IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL][p_start - p_start_bias] != IMAGE_COLOR_BLACK)
             {
-                p_start-=p_start_bias;
+                p_start -= p_start_bias;
                 break;
             }
-            if(image_p[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL][p_start+p_start_bias]!=IMAGE_COLOR_BLACK)
+            if (image_p[IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL][p_start + p_start_bias] != IMAGE_COLOR_BLACK)
             {
-                p_start+=p_start_bias;
+                p_start += p_start_bias;
                 break;
             }
         }
-        if(p_start_bias>=IMAGE_WIDTH/2-IMAGE_COL_KEEPOUT_PIXEL)
+        if (p_start_bias >= IMAGE_WIDTH / 2 - IMAGE_COL_KEEPOUT_PIXEL)
         {
             return;
         }
     }
-
-    for (uint16_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    /* 遍历每一行寻找边线 */
+    for (uint16_t i = IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         /* 定义左右边界x坐标和中线坐标 */
         uint8_t p_left = p_start;
@@ -168,7 +168,7 @@ void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
         p_start = p_mid;
 
         /* 断线退出，判据：当本行中线为black且下行也为black退出循环 */
-        if (tjrc_abs(p_right - p_left)<=2&&i < IMAGE_HEIGHT - 20)
+        if (tjrc_abs(p_right - p_left) <= 2 && i < IMAGE_HEIGHT - 20)
         {
             tjrc_log("[edge_x]line break row:%d\n", i);
             break;
@@ -182,7 +182,7 @@ void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
         line_info_out->x_left_edgeCnt = P_left_findEdgeCnt;
         line_info_out->x_right_edgeCnt = P_right_findEdgeCnt;
         tjrc_log("[edge_x]left:%d,right:%d,mid:%d\n", p_left, p_right, (p_left + p_right) / 2);
-        //image_p[i][(p_left + p_right) / 2] = IMAGE_COLOR_BLACK;
+        // image_p[i][(p_left + p_right) / 2] = IMAGE_COLOR_BLACK;
     }
 }
 
@@ -192,7 +192,7 @@ void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out)
  * @param line_info_in [in]边线信息结构体，存储边线横坐标，是否丢线等信息
  * @param inflection_info_out [out]拐点结构体，存储4角拐点的坐标和是否存在的标志位
  */
-void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_info* inflection_info_out)
+void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_info *inflection_info_out)
 {
     const int16_t slope_threshold = 3;
     const uint8_t search_tolerance = 5;
@@ -201,8 +201,8 @@ void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_inf
     /* 搜索的起止纵坐标 */
     uint8_t search_begin = 0, search_end = 0;
     /* 单独提取边线坐标信息 */
-    const uint8_t* line_left = line_info_in->x_left;
-    const uint8_t* line_right = line_info_in->x_right;
+    const uint8_t *line_left = line_info_in->x_left;
+    const uint8_t *line_right = line_info_in->x_right;
     /* 用于记录相邻边线横坐标的差值 */
     int8_t rate_slope[LINE_INFO_MAX_PIXEL];
 
@@ -210,8 +210,7 @@ void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_inf
     /* 计算左边线的横坐标差值(起始点规定为0) */
     for (uint8_t i = IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i < IMAGE_HEIGHT; i++)
     {
-        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ?
-            0 : line_left[i] - line_left[i - 1];
+        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_left[i] - line_left[i - 1];
         tjrc_log("%d, ", rate_slope[i]);
     }
     tjrc_log("\n");
@@ -244,8 +243,7 @@ void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_inf
     }
     /* 方向二：从下往上寻找左侧拐点 */
     search_begin = IMAGE_HEIGHT - search_tolerance;
-    search_end = (inflection_info_out->findFlag & inflection_upper_left) ?
-        inflection_info_out->y_upper_left + 10 : IMAGE_HEIGHT - IMAGE_INTEREST_REGION;
+    search_end = (inflection_info_out->findFlag & inflection_upper_left) ? inflection_info_out->y_upper_left + 10 : IMAGE_HEIGHT - IMAGE_INTEREST_REGION;
     for (uint8_t i = search_begin; i >= search_end + 2; i--)
     {
 
@@ -267,8 +265,7 @@ void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_inf
     /* 计算左边线的横坐标差值(起始点规定为0) */
     for (uint8_t i = IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i < IMAGE_HEIGHT; i++)
     {
-        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ?
-            0 : line_right[i] - line_right[i - 1];
+        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_right[i] - line_right[i - 1];
         tjrc_log("%d, ", rate_slope[i]);
     }
     tjrc_log("\n");
@@ -300,8 +297,7 @@ void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_inf
     }
     /* 方向四：从下往上寻找右侧拐点 */
     search_begin = IMAGE_HEIGHT - search_tolerance;
-    search_end = (inflection_info_out->findFlag & inflection_upper_right) ?
-        inflection_info_out->y_upper_right + 10 : IMAGE_HEIGHT - IMAGE_INTEREST_REGION;
+    search_end = (inflection_info_out->findFlag & inflection_upper_right) ? inflection_info_out->y_upper_right + 10 : IMAGE_HEIGHT - IMAGE_INTEREST_REGION;
     for (uint8_t i = search_begin; i >= search_end + 2; i--)
     {
         /* 判据：连续3行的斜率满足如下条件（需要将摄像头尽可能架高，俯视） */
@@ -325,7 +321,7 @@ void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_inf
  * @param line_info_out [out]边线信息结构体，存储边线横坐标，是否丢线等信息
  * @param inflection_info_in [in]拐点结构体，存储4角拐点的坐标和是否存在的标志位
  */
-void tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflection_info_in)
+void tjrc_imageProc_patchLine(line_info *line_info_out, inflection_info *inflection_info_in)
 {
     uint8_t x_left_lotCnt = IMAGE_INTEREST_REGION - line_info_out->x_left_edgeCnt;
     uint8_t x_right_lotCnt = IMAGE_INTEREST_REGION - line_info_out->x_right_edgeCnt;
@@ -338,24 +334,24 @@ void tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflect
     }
     /* 情况2：上方2拐点，两侧底部存在丢线：从底部左右补线 */
     if (inflection_info_in->findFlag == inflection_upper &&
-        line_info_out->x_left_findEdge[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL] == 0 &&
-        line_info_out->x_right_findEdge[IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL] == 0)
+        line_info_out->x_left_findEdge[IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL] == 0 &&
+        line_info_out->x_right_findEdge[IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL] == 0)
     {
-        patchLine(inflection_info_in->y_upper_left, IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);
-        patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+        patchLine(inflection_info_in->y_upper_left, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);
+        patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
     }
 }
 
 /**
  * @brief 将边线信息，拐点信息和中线更新叠加到图像
- * 
+ *
  * @param image [out]图像
  * @param line_info_in [in]边线信息
  * @param inflection_info_in [in]拐点信息
  */
-void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflection_info* inflection_info_in)
+void tjrc_imageProc_updateImage(uint8_t *image, line_info *line_info_in, inflection_info *inflection_info_in)
 {
-    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - line_info_in->pixel_cnt > i)
             continue;
@@ -365,7 +361,6 @@ void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflect
         /* 绘制边线 */
         image[i * IMAGE_WIDTH + line_info_in->x_left[i]] = 0xAA;
         image[i * IMAGE_WIDTH + line_info_in->x_right[i]] = 0xAA;
-
     }
     /* 添加拐点（0x33特殊映射到红色） */
     if (inflection_info_in->findFlag & inflection_upper_left)
@@ -385,10 +380,10 @@ void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflect
  * @param y1 终止点的纵坐标
  * @param line_x_out [io]线结构体
  */
-static void patchLine(uint8_t y0, uint8_t y1, uint8_t* line_x_out)
+static void patchLine(uint8_t y0, uint8_t y1, uint8_t *line_x_out)
 {
     if (y0 > IMAGE_HEIGHT || y0 < IMAGE_HEIGHT - IMAGE_INTEREST_REGION ||
-        y1> IMAGE_HEIGHT || y1 < IMAGE_HEIGHT - IMAGE_INTEREST_REGION)
+        y1 > IMAGE_HEIGHT || y1 < IMAGE_HEIGHT - IMAGE_INTEREST_REGION)
     {
         tjrc_log("[error]patchLine invaild param %d,%d\n", y0, y1);
         return;
@@ -409,11 +404,11 @@ static void patchLine(uint8_t y0, uint8_t y1, uint8_t* line_x_out)
 
 /**
  * @brief 判断当前区域有无斑马线
- * 
- * @param image 
- * @return uint8_t 
+ *
+ * @param image
+ * @return uint8_t
  */
-uint8_t check_gridLine(const uint8_t* image)
+uint8_t check_gridLine(const uint8_t *image)
 {
     /* 定义扫描起止行（上0下80） */
     const uint8_t row_begin = 45, row_end = 70;
@@ -428,14 +423,14 @@ uint8_t check_gridLine(const uint8_t* image)
     for (uint8_t y = row_begin; y <= row_end; y++)
     {
         uint8_t blocks = 0;
-        uint8_t cursor = 0;    //指向栈顶的游标
-        const uint8_t* row_ptr = &(image[IMAGE_WIDTH * y]);
-        //for (uint8_t x = IMAGE_COL_KEEPOUT_PIXEL; x < IMAGE_WIDTH - IMAGE_COL_KEEPOUT_PIXEL; x++)
-        //  if (row_ptr[x] == IMAGE_COLOR_BLACK)
-        //      tjrc_log("*");
-        //  else
-        //      tjrc_log("_");
-        //tjrc_log("\n");
+        uint8_t cursor = 0; //指向栈顶的游标
+        const uint8_t *row_ptr = &(image[IMAGE_WIDTH * y]);
+        // for (uint8_t x = IMAGE_COL_KEEPOUT_PIXEL; x < IMAGE_WIDTH - IMAGE_COL_KEEPOUT_PIXEL; x++)
+        //   if (row_ptr[x] == IMAGE_COLOR_BLACK)
+        //       tjrc_log("*");
+        //   else
+        //       tjrc_log("_");
+        // tjrc_log("\n");
         /* 横向遍历当前行 */
         for (uint8_t x = IMAGE_COL_KEEPOUT_PIXEL; x < IMAGE_WIDTH - IMAGE_COL_KEEPOUT_PIXEL; x++)
         {
@@ -465,7 +460,6 @@ uint8_t check_gridLine(const uint8_t* image)
         return 0;
 }
 
-
 /**
  * @brief 求当前直线斜率
  *
@@ -473,12 +467,12 @@ uint8_t check_gridLine(const uint8_t* image)
  * @param line_info_in 边线信息
  * @return float 斜率，-90deg ~ 90deg
  */
-static float fit_slope(const uint8_t* line, line_info* line_info_in)
+static float fit_slope(const uint8_t *line, line_info *line_info_in)
 {
     float sum_xy = 0.0f, sum_xx = 0.0f;
     float sum_x = 0.0f, sum_y = 0.0f;
     uint8_t n = 0;
-    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - line_info_in->pixel_cnt > i)
             break;
@@ -511,7 +505,7 @@ static float fit_slope(const uint8_t* line, line_info* line_info_in)
  * @param line_info_in 边线信息
  * @return float -60~60
  */
-static float weighted_line(const uint8_t* line, line_info* line_info_in)
+static float weighted_line(const uint8_t *line, line_info *line_info_in)
 {
     static uint8_t weighted_table[IMAGE_HEIGHT];
     static uint8_t first = 1;
@@ -520,21 +514,21 @@ static float weighted_line(const uint8_t* line, line_info* line_info_in)
     /* 首次调用，生成权值表 */
     if (first)
     {
-        for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+        for (uint8_t i = IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
         {
-            if(i<IMAGE_HEIGHT&& i>=IMAGE_HEIGHT-20)
-                weighted_table[i]=40;
-            if(i<IMAGE_HEIGHT-20&& i>=IMAGE_HEIGHT-40)
-                weighted_table[i]=30;
-            if(i<IMAGE_HEIGHT-40&& i>=IMAGE_HEIGHT-60)
-                weighted_table[i]=20;
-            if(i<IMAGE_HEIGHT-60)
-                weighted_table[i]=10;
+            if (i < IMAGE_HEIGHT && i >= IMAGE_HEIGHT - 20)
+                weighted_table[i] = 40;
+            if (i < IMAGE_HEIGHT - 20 && i >= IMAGE_HEIGHT - 40)
+                weighted_table[i] = 30;
+            if (i < IMAGE_HEIGHT - 40 && i >= IMAGE_HEIGHT - 60)
+                weighted_table[i] = 20;
+            if (i < IMAGE_HEIGHT - 60)
+                weighted_table[i] = 10;
         }
         first = 0;
     }
     float lsum = 0.0f;
-    for (uint8_t i = IMAGE_HEIGHT  - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+    for (uint8_t i = IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
     {
         if (IMAGE_HEIGHT - line_info_in->pixel_cnt > i)
             break;
@@ -554,12 +548,12 @@ static float weighted_line(const uint8_t* line, line_info* line_info_in)
 
 /**
  * @brief 图像处理调试信息输出（可以通过注释影藏调试信息）
- * 
- * @param format 
- * @param ... 
- * @return int 
+ *
+ * @param format
+ * @param ...
+ * @return int
  */
-int tjrc_log(char* format, ...)
+int tjrc_log(char *format, ...)
 {
     /*static char buff[128];
     va_list ap;
@@ -569,4 +563,3 @@ int tjrc_log(char* format, ...)
     printf("%s", buff);*/
     return 0;
 }
-
