@@ -47,18 +47,18 @@ void core1_camera_service(void)
     IfxCpu_waitEvent(&cameraCapture_event, 0xFFFF);
     cameraCapture_event = 0;
     while(!camera_cplt_flag);
-
     /* 翻转camera指示灯 */
     IfxPort_togglePin(CAMERA_LED);
 
     timeStamp_start=rt_tick_get();
     /* 显示灰度图像 */
-    //tjrc_mt9v03x_displayImage_gray((uint8_t*)MT9V03X_image[0]);
+    //tjrc_st7735_dispImage_gray((uint8_t*)MT9V03X_image[0],IMAGE_WIDTH, IMAGE_HEIGHT, 0,24);
     //tjrc_mt9v03x_displayImage((uint8_t*)MT9V03X_image[0], 60);
 
+    IfxPort_setPinHigh(BEEP_PIN);
     uint8_t* image_out = tjrc_imageProc((uint8_t*)MT9V03X_image[0]);
-    timeStamp_end=rt_tick_get();
     tjrc_st7735_dispImage_gray(image_out,IMAGE_WIDTH, IMAGE_HEIGHT, 0,24);
+    timeStamp_end=rt_tick_get();
     sprintf((char*)str_buff,"cnt=%d, t=%dms   ",cnt++,timeStamp_end-timeStamp_start);
     tjrc_st7735_dispStr612(12,12,str_buff,RGB565_MAGENTA);
     /* 清除标志位，开始下一帧采样  */

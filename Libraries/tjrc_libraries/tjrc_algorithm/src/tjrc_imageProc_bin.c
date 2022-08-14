@@ -201,7 +201,7 @@ void tjrc_sobel_autoThreshold(const uint8_t *imageIn, uint8_t *imageOut, uint16_
             /* 使用像素点邻域内像素点之和的一定比例    作为阈值  */
             temp[3] = (int32_t)imageIn[(i - 1) * width + j - 1] + (int32_t)imageIn[(i - 1) * width + j] + (int32_t)imageIn[(i - 1) * width + j + 1] + (int32_t)imageIn[i * width + j - 1] + (int32_t)imageIn[i * width + j] + (int32_t)imageIn[i * width + j + 1] + (int32_t)imageIn[(i + 1) * width + j - 1] + (int32_t)imageIn[(i + 1) * width + j] + (int32_t)imageIn[(i + 1) * width + j + 1];
 
-            if (temp[0] > temp[3] / 10.0f)
+            if (temp[0] > temp[3] / 20.0f)
             {
                 imageOut[i * width + j] = IMAGE_COLOR_BLACK;
                 imageOut[i * width + j + 1] = IMAGE_COLOR_BLACK;

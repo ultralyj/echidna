@@ -35,7 +35,7 @@
 /**
  * @brief 图像感兴趣的高度（0-i）
  */
-#define IMAGE_INTEREST_REGION 70
+#define IMAGE_INTEREST_REGION 73
 
 /**
  * @brief 图像颜色宏定义
@@ -111,11 +111,14 @@ void tjrc_sobel_autoThreshold(const uint8_t* imageIn, uint8_t* imageOut, uint16_
 /* 搜线，拐点，补线函数组 */
 void tjrc_imageProc_searchEdge_x(const uint8_t* image, line_info* line_info_out);
 void tjrc_imageProc_fineInflection(const line_info* line_info_in, inflection_info* inflection_info_out);
-void tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflection_info_in);
+uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* inflection_info_in);
 void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflection_info* inflection_info_in);
 
 /* 赛道元素判断函数组 */
 uint8_t check_gridLine(const uint8_t* image);
+uint8_t check_separate(const uint8_t* image);
+int is_inRoundabout();
+int check_roundabout(inflection_info* inflection_info_in, line_info* line_info_in);
 
 /* 图像log信息调试函数（一般为空，调试时正常输出） */
 int tjrc_log(char* format, ...);

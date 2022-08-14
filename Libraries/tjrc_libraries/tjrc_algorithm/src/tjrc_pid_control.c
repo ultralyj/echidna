@@ -19,7 +19,7 @@ const uint8_t drive_enable = 1;
 /* 转向控制使能标志变量 */
 const uint8_t turn_enable = 1;
 
-float Angle_zero = -0.074f;  //平衡角度
+float Angle_zero = -0.025f;  //平衡角度
 
 /*******************直立环***********************************/
 
@@ -27,31 +27,37 @@ float Angle_zero = -0.074f;  //平衡角度
  * @brief 直立环PID参数
  * 
  */
-float angle_kp = 250000;
-float angle_kd = 15000;
-float angle_ki = 1500;
-const float Angle_Integral_Max = 0.5;
+float angle_kp = 300000;//250000;
+float angle_kd = 20000;//15000;
+float angle_ki = 2000;//1500;
+const float Angle_Integral_Max = 0.8;
 
 /**
  * @brief 直接法PID控制直立环
  * 
  * @param angle_kalman 卡尔曼滤波计算得到的角度
  * @param angle_dot 卡尔曼滤波计算得到的角速度
+ * @param camera_pixelError 中线偏离
  * @return int32_t PID输出控制量（PWM占空比）
  */
-int32_t tjrc_pid_balance(float angle_kalman, float angle_dot)
+int32_t tjrc_pid_balance(float angle_kalman, float angle_dot, float camera_pixelError)
 {
     float angle_bias;
     static float Angle_Integral = 0;
+    static float last_camera_error = 0;
     int32_t pwm_out = 0;
-    
+    /* pd融合 */
+    float temp_camera_angle = camera_pixelError*0.001 + (camera_pixelError-last_camera_error)*0.005;
+    last_camera_error = camera_pixelError;
     /* 获取角度偏移量（IMU测得角度与目标角度之差） */
-    angle_bias = angle_kalman - Angle_zero;
+    angle_bias = angle_kalman - Angle_zero + temp_camera_angle;
 
     /* 计算积分量并限幅 */
     Angle_Integral += angle_bias;
     Angle_Integral = float_Constrain(Angle_Integral, -Angle_Integral_Max, Angle_Integral_Max);
-    
+//    uint8_t str[30];
+//    sprintf((char*)str,"%.04f,%.04f,%.04f\n",angle_kalman, Angle_zero, Angle_Integral);
+//    tjrc_asclin1_sendStr(str);
     /* 直接法PID */
     pwm_out = ((int)(angle_kp * angle_bias + angle_kd * (angle_dot) + angle_ki * Angle_Integral));
     return pwm_out;
@@ -63,15 +69,14 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot)
  * @brief 速度环PID参数
  * 
  */
-double V_S_Kp = -0.000016;
-double V_S_Ki = 0.010;
-double V_S_Kd = 0.15;
-const double V_S_Integral_Max = 0.01;
+double V_S_Kp = -0.000004;//-0.000016;
+double V_S_Ki = 0.025;
+double V_S_Kd = 0.3;//0.15;
+const double V_S_Integral_Max = 0.008;
 
 /**
- * @brief 串联的速度环，增量式PID控制，平滑到10个平滑周期
- * 
- * @param _V_S_Bias 动量轮编码器的速度信息
+ * @brief 串联的速度环，增量式PID控制，平滑到20个平滑周期
+ *
  * @return float PID控制量输出
  */
 float tjrc_pid_speedLoop(float _V_S_Bias)
@@ -100,14 +105,16 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
     /* D:微分 */
     V_S_Diff = (Angle_Diff - Angle_Diff_Last) * V_S_Kd;
     /* I:积分 */
-    if (f_Abs(V_S_Bias) > 0)
+    if (f_Abs(V_S_Bias) > 50)
         V_S_Integral = ((double)Angle_New) * V_S_Ki;
 
     /* 积分限幅 */
     V_S_Integral = float_Constrain(V_S_Integral, -V_S_Integral_Max, V_S_Integral_Max);
+//        V_S_Integral=0;  //不使用积分
+//        V_S_Diff = 0;//不使用微分
 
-    /* 结果加和并且进行平滑处理 */
-    float Angle_delta = (double)(Angle_Diff + V_S_Diff + V_S_Integral) / 20.0;
+    /* 结果加和并且进行平滑处理，需要与分频一致 */
+    float Angle_delta = (double)(Angle_Diff + V_S_Diff + V_S_Integral) / 10.0;
     return Angle_delta;
 }
 
@@ -124,15 +131,14 @@ float target_speed = 0;
  * @brief 后轮驱动PID参数
  * 
  */
-float Dr_kp = 3;
-float Dr_ki = 0.2;
+float Dr_kp = 2;
+float Dr_ki = 1;
 float Dr_kd = 0.35;
 const float Max_Dr_Integral = 4000;
 
 /**
  * @brief 直接法PID控制后轮驱动速度环
  * 
- * @param speed 后轮驱动电机编码器的速度信息
  * @return int32_t PWM输出（-50~50）
  */
 int32_t tjrc_pid_drive(float speed)
@@ -146,12 +152,12 @@ int32_t tjrc_pid_drive(float speed)
     Dr_Integral += Dr_Bias;
     Dr_Integral = float_Constrain(Dr_Integral, -Max_Dr_Integral, Max_Dr_Integral);
     /* 直接法计算PID */
-    duty = (int32_t)(Dr_kp * Dr_Bias + Dr_kd * (Dr_Bias - last_Dr_Bias) + Dr_ki * Dr_Integral);
+    duty = (int)(Dr_kp * Dr_Bias + Dr_kd * (Dr_Bias - last_Dr_Bias) + Dr_ki * Dr_Integral);
     /* 更新数据 */
     last_duty = duty;
     last_Dr_Bias = Dr_Bias;
     /* 输出限幅 */
-    duty = int16_t_Constrain(duty,-5000,5000);
+    duty = int16_t_Constrain(duty,0,6000);
     /* 输出占空比 */
     return duty;
 }
@@ -167,16 +173,14 @@ float direct_target = 0;
 
 float direct_kp = 200;
 float direct_ki = 5;
-float direct_kd = 100;
+float direct_kd = 8;
 float Direct_Integral_Max = 1;
 
 
 /**
- * @brief 舵机协同平衡pid
+ * @brief
  * 
- * @param angle_kalman 卡尔曼滤波后的姿态角
- * @param angle_dot 姿态角微分
- * @return float 舵机协同平衡的偏置角
+ * @return float 舵机控制量输出
  */
 float tjrc_pid_servo_balance(float angle_kalman, float angle_dot)
 {
@@ -188,7 +192,7 @@ float tjrc_pid_servo_balance(float angle_kalman, float angle_dot)
     /* 获取角度偏移量（IMU测得角度与目标角度之差） */
     float angle_bias = angle_kalman - Angle_zero;
     /* 若角度偏移过大，动量轮难以调节，则使用舵机调节 */
-    if(f_Abs(angle_bias) > 0.02f)
+    if(f_Abs(angle_bias) > 0.015f)
     {
         /* 计算积分量并限幅 */
         direct_integral += angle_bias;
@@ -209,17 +213,10 @@ float tjrc_pid_servo_balance(float angle_kalman, float angle_dot)
     return direct_bias_pid;
 }
 
-float servo_kp = 2.0f;
-float servo_ki = 0.2f;
-float servo_kd = 1.0f;
-float servo_Integral_Max = 5.0f;
-/**
- * @brief 舵机主方向控制pid
- * 
- * @param mid 中线偏移量
- * @param slope 中线斜率
- * @return float 舵机角度
- */
+float servo_kp = 0.6f;
+float servo_ki = 0.6f;
+float servo_kd = 0.6f;
+float servo_Integral_Max = 10.0f;
 float tjrc_pid_servo_trace(float mid, float slope)
 {
     float mid_error;
@@ -258,7 +255,7 @@ float tjrc_flyWheel_getSpeed(void)
 }
 
 
-float enc1_fade_coe = 0.4f;
+float enc1_fade_coe = 0.9f;
 /**
  * @brief 通过编码器1(GPT12-T6)，获取驱动轮的速度信息
  * 
@@ -269,8 +266,6 @@ float tjrc_drive_getSpeed(void)
     static float speed_enc1_last = 0;
     float speed_enc1;
     speed_enc1 = -(float)tjrc_gpt12_getT6();
-    if(speed_enc1>60000)
-        return 0;
     speed_enc1 = ((1 - enc1_fade_coe) * speed_enc1_last + enc1_fade_coe * speed_enc1);
     speed_enc1_last = speed_enc1;
     return speed_enc1;
@@ -289,7 +284,7 @@ void tjrc_motionControl(void)
     static float b_angle_delta = 0.0f;
     static float b_angle_kalman = 0.0f , b_angle_dot = 0.0f;
     static float b_turn_delta = 0.0f, b_turn_target = 0.0f;
-    static float b_turn_dot = 0.0f, b_turn_raw=0.0f;
+
     static float b_flyWheel_speed = 0.0f, b_drive_speed = 0.0f;
 
     /* PWM输出变量 */
@@ -303,8 +298,7 @@ void tjrc_motionControl(void)
         extern uint8_t switch_value;
         if(switch_value & SWITCH3)
         {
-            printf("fix speed mode!\r\n");
-            target_speed=150;
+            target_speed=400;
         }
         kalman_initCnt = 0;
     }
@@ -314,8 +308,9 @@ void tjrc_motionControl(void)
     }
     /* 获取IMU信息，进行卡尔曼滤波，再输入到直立环PID得到动量轮PWM输出 */
     tjrc_getAngle_kalman(&b_angle_kalman, &b_angle_dot); //得到计算的初始角度
-    flywheel_pwmOut = tjrc_pid_balance(b_angle_kalman, b_angle_dot);
-
+    extern float camera_pixelError;
+    flywheel_pwmOut = tjrc_pid_balance(b_angle_kalman, b_angle_dot, camera_pixelError);
+   //printf("%f,\n",b_angle_kalman);
     /* 在电机使能的状态下，平行处理动量轮速度环，后轮驱动和舵机 */
     if (motor_enable==1)
     {
@@ -327,9 +322,9 @@ void tjrc_motionControl(void)
                 speedLoop_cnt = 0;
                 b_flyWheel_speed = tjrc_flyWheel_getSpeed();
                 b_angle_delta = tjrc_pid_speedLoop(b_flyWheel_speed);
-                uint8_t str[30];
-                sprintf((char*)str,"%.04f,%.04f\n",b_angle_kalman,Angle_zero);
-                tjrc_asclin1_sendStr(str);
+//                uint8_t str[30];
+//                sprintf((char*)str,"%.04f,%.04f\n",b_angle_kalman,Angle_zero);
+//                tjrc_asclin1_sendStr(str);
 
                 //sprintf((char*)str,"A0:%.03f AK:%.03f ",Angle_zero,b_angle_kalman);
                 //tjrc_st7735_dispStr612(0,116,(uint8_t*)str,RGB565_BLUE);
@@ -337,10 +332,10 @@ void tjrc_motionControl(void)
             speedLoop_cnt++;
         }
 
-        /* 舵机方向（1/5） */
+        /* 舵机方向（1/4） */
         if (turn_enable)
         {
-            if (turn_cnt == 5)
+            if (turn_cnt == 4)
             {
                 turn_cnt = 0;
                 /* 更新舵机辅助平衡偏置角 */
@@ -348,10 +343,8 @@ void tjrc_motionControl(void)
                 /* 更新舵机目标偏置角（摄像头信息） */
                 extern float camera_slope;
                 extern float camera_pixelError;
-                b_turn_raw = -tjrc_pid_servo_trace(camera_pixelError,camera_slope);
-                b_turn_dot = float_Constrain(b_turn_raw-b_turn_target, -5,5);
-                b_turn_target +=b_turn_dot;
-                //printf("[servo]%f,%d\r\n",b_drive_speed,drive_pwmOut);
+                b_turn_target = -tjrc_pid_servo_trace(camera_pixelError,camera_slope);
+                //printf("[servo]%f,%f,%f\r\n",camera_slope,camera_pixelError,b_turn_target);
                 /* 远程目标角度调节 */
                 if (steer_direct == 0 || steer_direct == 1)
                 {
@@ -366,8 +359,7 @@ void tjrc_motionControl(void)
                     steer_direct = -1;
                     // Turn_delta = direct*kkp*drive_encoder;//计算得到此次的压弯角度
                 }
-
-                float direct = direct_target + b_turn_target + b_turn_delta;
+                float direct = direct_target + b_turn_target + b_turn_delta/4;
                 direct = float_Constrain(direct, -26, 26);
                 tjrc_servo_setAngle(direct);
             }
@@ -376,7 +368,7 @@ void tjrc_motionControl(void)
         /* 后轮驱动（1/5） */
         if (drive_enable)
         {
-            if (drive_cnt == 1)
+            if (drive_cnt == 5)
             {
                 drive_cnt = 0;
                 b_drive_speed = tjrc_drive_getSpeed();
@@ -388,14 +380,14 @@ void tjrc_motionControl(void)
         }
 
         /* 偏移角过大，停转保护 */
-        if (b_angle_kalman > 0.35 || b_angle_kalman < -0.6 || fabs(b_flyWheel_speed) > 20000)
+        if (b_angle_kalman > 0.6 || b_angle_kalman < -0.6 || fabs(b_flyWheel_speed) > 20000)
         {
             flywheel_pwmOut = 0;
             motor_enable = -1;
             IfxPort_setPinLow(FLYWHEEL_MOTOR_EN_PIN);
         }
         extern float Angle_zero;
-        Angle_zero -= b_angle_delta;                         //叠加串联输出
+        Angle_zero += b_angle_delta;                         //叠加串联输出
         flywheel_pwmOut = s32_AmpConstrain(-9000, 9000, flywheel_pwmOut); //平衡环限幅
         tjrc_flyWheelMotor_pwm(-flywheel_pwmOut);
     }

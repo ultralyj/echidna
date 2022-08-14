@@ -29,7 +29,7 @@ extern float Dr_kp, Dr_ki, Dr_kd;
 extern float direct_kp, direct_ki, direct_kd;
 
 /* PID控制函数 */
-int32_t tjrc_pid_balance(float angle_kalman, float angle_dot);
+int32_t tjrc_pid_balance(float angle_kalman, float angle_dot, float camera_pixelError);
 float tjrc_pid_speedLoop(float _V_S_Bias);
 int32_t tjrc_pid_drive(float speed);
 
