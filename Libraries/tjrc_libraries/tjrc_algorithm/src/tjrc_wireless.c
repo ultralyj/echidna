@@ -46,6 +46,7 @@ void tjrc_wireless_recCallBack(void)
 		{
 			data += (buffer[2 + i] - 48) * int_pow(10, rx_cnt - 3 - i);
 		}
+		IfxPort_setPinLow(BEEP_PIN);
 		switch (buffer[1])
 		{
 		case 'p':

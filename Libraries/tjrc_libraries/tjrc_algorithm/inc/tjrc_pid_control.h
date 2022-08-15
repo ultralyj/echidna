@@ -27,7 +27,7 @@ extern float V_S_Kp, V_S_Ki, V_S_Kd;
 extern float Dr_kp, Dr_ki, Dr_kd;
 /* 速度环可控参数 */
 extern float direct_kp, direct_ki, direct_kd;
-
+extern float target_speed;
 /* PID控制函数 */
 int32_t tjrc_pid_balance(float angle_kalman, float angle_dot, float camera_pixelError);
 float tjrc_pid_speedLoop(float _V_S_Bias);

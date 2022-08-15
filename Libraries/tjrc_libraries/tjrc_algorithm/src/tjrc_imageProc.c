@@ -23,6 +23,7 @@ float line_bias = 0;
 float camera_slope = 0, camera_pixelError = 0;
 
 uint8_t is_separate=0;
+uint8_t is_gridline=0;
 /**
  * @brief 二值化图像矩阵（二值化矩阵也将用于绘制边线，中线等信息）
  * 尺寸为120*80=9600Byte=9.375KB(x2)
@@ -48,27 +49,23 @@ uint8_t *tjrc_imageProc(const uint8_t *image_p)
     is_separate=0;
 
     /* 第一步：二值化 */
-    //    static uint8_t threshold_smooth = 30;
-    //    uint8_t threshold = tjrc_binarization_otsu(image_p, IMAGE_WIDTH, IMAGE_HEIGHT);
-    //    uint8_t threshold_bias = 7;
-    //    threshold += threshold_bias;
-    //    threshold_smooth = (uint8_t)(0.8*threshold_smooth+0.2*threshold);
-    //    //printf("[imp]threshold=%d(OTSU)\r\n", threshold);
-    //    tjrc_binarization_getBinImage(threshold_smooth, image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+    static uint8_t threshold_smooth = 30;
+    uint8_t threshold = tjrc_binarization_otsu(image_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+    uint8_t threshold_bias = 7;
+    threshold += threshold_bias;
+    threshold_smooth = (uint8_t)(0.8*threshold_smooth+0.2*threshold);
+    //printf("[imp]threshold=%d(OTSU)\r\n", threshold);
+    tjrc_binarization_getBinImage(threshold_smooth, image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
     /* 针对弱光环境或者反光强烈情况使用sobel算子 */
-    tjrc_sobel_autoThreshold(image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
+//    tjrc_sobel_autoThreshold(image_p, image_bin_p, IMAGE_WIDTH, IMAGE_HEIGHT);
 
     /* 第二步：搜线，求拐点，补线 */
-    if (check_gridLine(image_bin_p))
-    {
-        tjrc_log("gird line\r\n");
-    }
-
     is_separate = check_separate(image_bin_p);
 
     tjrc_imageProc_searchEdge_x(image_bin_p, &edge_line);
     tjrc_imageProc_fineInflection(&edge_line, &inflections);
-    tjrc_imageProc_patchLine(&edge_line, &inflections);
+    is_gridline = check_gridLine(image_bin_p, &edge_line);
+    uint8_t patch_res = tjrc_imageProc_patchLine(&edge_line, &inflections);
 //    printf("[patch]%d\r\n",patch_res);
     /* 第三步：更新图像 */
     tjrc_imageProc_updateImage(image_bin_p, &edge_line, &inflections);
@@ -92,6 +89,12 @@ uint8_t *tjrc_imageProc(const uint8_t *image_p)
     {
         IfxPort_setPinLow(BEEP_PIN);
     }
+    char str2[40];
+    sprintf(str2,"c:%f",camera_pixelError);
+    tjrc_st7735_dispStr612(88,146,(uint8_t*)str2,RGB565_GREEN);
+    tjrc_st7735_dispStr612(88,146,(uint8_t*)str2,RGB565_GREEN);
+
+
     return image_bin_p;
 }
 
@@ -213,6 +216,7 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
     const uint8_t line_tolerance = 3;
     const uint8_t line_tolerance_t = 60;
     const uint8_t turn_tolerance = 13;
+    const uint8_t rate = 2;
     /* 清空拐点搜寻标志位：复位到未搜到拐点状态 */
     inflection_info_out->findFlag = 0;
     /* 搜索的起止纵坐标 */
@@ -232,11 +236,14 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
     uint8_t left_turn_count = 0;
     uint8_t right_turn_count = 0;
 
+    uint8_t check_left_120turn = 0;
+    uint8_t check_right_120turn = 0;
+
     /*______LEFT_______ */
     /* 计算左边线的横坐标差值(起始点规定为0) */
     for (uint8_t i = IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i < IMAGE_HEIGHT; i++)
     {
-        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_left[i] - line_left[i - 2];
+        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_left[i] - line_left[i - rate];
         line_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_left[i] - line_left[i - 1];
         tjrc_log("%d, ", rate_slope[i]);
     }
@@ -261,6 +268,11 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
     }
     if (left_turn_count >= turn_tolerance)left_is_turn = 1;
     if (right_turn_count >= turn_tolerance)right_is_turn = 1;
+
+//    left_is_line = 0;  //TODO
+//    right_is_line = 0;
+//    left_is_turn = 0;
+//    right_is_turn = 0;
 
     if (!left_is_line && !left_is_turn)
     {
@@ -309,6 +321,38 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
                 break;
             }
         }
+        if (!(inflection_info_out->findFlag & inflection_lower_left))
+        {
+            uint8_t max = 0;
+            uint8_t maxi = 0;
+            uint8_t find_left[2];
+            find_left[0] = 0;
+            find_left[1] = 0;
+
+            check_left_120turn = tjrc_check_120turn(line_info_in, 0, find_left);
+            printf("check_left_120turn:%d\n",check_left_120turn);
+            if (check_left_120turn)
+            {
+                for (uint8_t i = find_left[1]; i < find_left[0]; i++)
+                {
+                    if (line_info_in->x_left[i] >= max)
+                    {
+                        max = line_info_in->x_left[i];
+                        maxi = i;
+                    }
+                }
+                inflection_info_out->findFlag |= inflection_lower_left;
+                inflection_info_out->x_lower_left = max;
+                inflection_info_out->y_lower_left = maxi;
+                if (maxi < inflection_info_out->y_upper_left)
+                {
+                    inflection_info_out->findFlag &= 0x0E;
+                    inflection_info_out->x_upper_left = 0;
+                    inflection_info_out->y_upper_left = 0;
+                }
+                tjrc_log("find inflection[LL] (%d,%d)\n", max, maxi);
+            }
+        }
     }
 
 
@@ -316,7 +360,7 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
     /* 计算左边线的横坐标差值(起始点规定为0) */
     for (uint8_t i = IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i < IMAGE_HEIGHT; i++)
     {
-        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_right[i] - line_right[i - 2];
+        rate_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_right[i] - line_right[i - rate];
         line_slope[i] = (i == IMAGE_HEIGHT - IMAGE_INTEREST_REGION) ? 0 : line_right[i] - line_right[i - 1];
         tjrc_log("%d, ", rate_slope[i]);
     }
@@ -334,6 +378,11 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
             break;
         }
     }
+
+//    left_is_line = 0;  //TODO
+//    right_is_line = 0;
+//    left_is_turn = 0;
+//    right_is_turn = 0;
 
     if (!right_is_line && !right_is_turn)
     {
@@ -379,6 +428,38 @@ void tjrc_imageProc_fineInflection(const line_info *line_info_in, inflection_inf
                 tjrc_log("find inflection[RL] (%d,%d)\n", line_right[i - 2], i - 2);
                 break;
             }
+        }
+        if (!(inflection_info_out->findFlag & inflection_lower_right))
+        {
+            uint8_t min = 120;
+            uint8_t mini = 0;
+            uint8_t find_right[2];
+            find_right[0] = 0;
+            find_right[1] = 0;
+            check_right_120turn = tjrc_check_120turn(line_info_in, 1, find_right);
+            printf("check_right_120turn:%d\n",check_right_120turn);
+            if (check_right_120turn)
+            {
+                for (uint8_t i = find_right[1]; i < find_right[0]; i++)
+                {
+                    if (line_info_in->x_right[i] <= min)
+                    {
+                        min = line_info_in->x_right[i];
+                        mini = i;
+                    }
+                }
+                inflection_info_out->findFlag |= inflection_lower_right;
+                inflection_info_out->x_lower_right = min;
+                inflection_info_out->y_lower_right = mini;
+                if (mini < inflection_info_out->y_upper_right)
+                {
+                    inflection_info_out->findFlag &= 0x0B;
+                    inflection_info_out->x_upper_right = 0;
+                    inflection_info_out->y_upper_right = 0;
+                }
+                tjrc_log("find inflection[RL] (%d,%d)\n", min, mini);
+            }
+            printf("find_right:%d,%d\n", find_right[0], find_right[1]);
         }
     }
 
@@ -449,6 +530,7 @@ int check_roundabout(inflection_info* inflection_info_in, line_info* line_info_i
 static uint8_t circle_flag = 0;
 static uint8_t cross_flag = 0;
 static uint8_t separate_flag = 0;
+static uint8_t gridline_flag = 0;
 /**
  * @brief 根据拐点信息，对当前情况进行分类进行补线
  *
@@ -475,6 +557,58 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
       if (line_info_out->x_right_findEdge[i] == 0)right_lower_lotCnt++;
       else break;
      }
+
+
+     char str2[40];
+     sprintf(str2,"g:%d",gridline_flag);
+     tjrc_st7735_dispStr612(82,132,(uint8_t*)str2,RGB565_GREEN);
+     tjrc_st7735_dispStr612(82,132,(uint8_t*)str2,RGB565_GREEN);
+
+     /* ___gridline___ */
+     /* =============================================斑马线状态机=============================================== */
+     switch(gridline_flag)
+     {
+         case 0:
+             if(is_gridline)
+             {
+                 IfxPort_setPinLow(BEEP_PIN);
+                 gridline_flag=1;
+             }
+             break;
+         case 1:
+             if(inflection_info_in->findFlag & inflection_upper_left)
+             {
+                 line_info_out->x_right[inflection_info_in->y_upper_left] = line_info_out->x_left[inflection_info_in->y_upper_left];
+                 patchLine(inflection_info_in->y_upper_left, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+             }
+             else
+             {
+                 line_info_out->x_right[10] = 4;
+                 patchLine(10, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+             }
+             if(left_lower_lotCnt>=30) gridline_flag=2;
+             return 12;
+             break;
+         case 2:
+             line_info_out->x_right[30] = 4;
+             patchLine(30, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+             if((left_lower_lotCnt<=20) && (right_lower_lotCnt<=20)) gridline_flag=3;
+             return 13;
+             break;
+         case 3:
+             line_info_out->x_right[30] = 4;
+             patchLine(30, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+             if(line_info_out->pixel_cnt<=20)
+             {
+                 IfxPort_setPinLow(BEEP_PIN);
+                 gridline_flag=0;
+                 extern float target_speed;
+                 target_speed = 0;
+             }
+             return 14;
+             break;
+     }
+
      /* 情况3：右侧环岛检测 */
      /* 计数器，对环岛运行大致计时 */
     static uint16_t roundabout_cnt = 0;
@@ -511,77 +645,102 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
             case 1:
                 /* 将此时的右上拐点拉线到右下 */
                 IfxPort_setPinLow(BEEP_PIN);
-                if (inflection_info_in->findFlag & inflection_upper_right)
+                if ((inflection_info_in->findFlag & inflection_upper_right) && (inflection_info_in->findFlag & inflection_lower_right))
                 {
                     patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
                     /* 等此时的右上拐点位置到了右下，进入状态2 */
-                    if(right_lower_lotCnt<=10)
+                    if(right_lower_lotCnt==0)//<=5
                       circle_flag = 2;
                 }
-                if (inflection_info_in->findFlag & inflection_lower_right)
+                else
                 {
-                    patchLine(inflection_info_in->y_lower_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+                    line_info_out->x_right[15] = 70;
+                    patchLine(15, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
                 }
                 return 1;
                 break;
-            /* 状态3：进入入环状态 */
             case 2:
-                /* 将此时的右上拐点拉到左下，进行入环*/
+                if(right_lower_lotCnt>=20)
+                {
+                    circle_flag = 3;
+                }
                 if (inflection_info_in->findFlag & inflection_upper_right)
+                {
+                    patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+                }
+                else
+                {
+                    line_info_out->x_right[15] = 70;
+                    patchLine(15, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+                }
+                return 18;
+                break;
+            /* 状态3：进入入环状态 */
+            case 3:
+                /* 将此时的右上拐点拉到左下，进行入环*/
+                if ((inflection_info_in->findFlag & inflection_upper_right) && right_lower_lotCnt>=10)
                 {
                     line_info_out->x_left[inflection_info_in->y_upper_right] = line_info_out->x_right[inflection_info_in->y_upper_right];
                     patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);
                     /* 当左下丢线到一定程度，转入状态3 */
                     if(left_lower_lotCnt>=40)
-                      circle_flag = 3;
+                      circle_flag = 4;
+                }
+                else
+                {
+                    line_info_out->x_left[15] = 85;
+                    patchLine(15, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);
                 }
                 return 1;
                 break;
             /* 状态3：即将进环状态 */
-            case 3:
+            case 4:
                 /* 此时即将进入环内，为防止出环，加入右偏置，并转入状态4 */
                 line_bias = 10;
-                circle_flag = 4;
+                circle_flag = 5;
                 return 3;
                 break;
             /* 状态4：完成进环，此时为环内状态，依靠边线巡线，不进行补线 */
-            case 4:
+            case 5:
                 if(left_lower_lotCnt<10)
                 {
                     line_bias = 13;
-                    circle_flag = 5;
+                    circle_flag = 6;
                 }
                 return 4;
                 break;
             /* 状态5：判断出环 */
-            case 5:
+            case 6:
                 /* 当满足左右同时丢线，判断为出环状态 */
                 if((x_left_lotCnt>=45 || left_lower_lotCnt>=15) && right_lower_lotCnt>=15)
                 {
-                    circle_flag = 6;
+                    circle_flag = 7;
                 }
 //                if(inflection_info_in->findFlag & inflection_upper_right) //当判断左丢线小于一定程度，转入状态6
 //                circle_flag = 6;
                 return 5;
                 break;
-            case 6:
+//            case 6:
+            case 7:
                 IfxPort_setPinLow(BEEP_PIN);
                 line_bias=10;
                 line_info_out->x_left[30] = 117;
                 patchLine(30, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);  //将左边线的斜率增大
                 if((inflection_info_in->findFlag & inflection_upper_right) || (inflection_info_in->findFlag & inflection_lower_right)) //当判断左丢线小于一定程度，转入状态6
-                circle_flag = 7;
+                circle_flag = 8;
                 return 9;
                 break;
-            case 7:
+            case 8:
                 line_bias=-5;
                 if(inflection_info_in->findFlag & inflection_upper_right) //将右上拐点拉到右下
                 {
                     patchLine(inflection_info_in->y_upper_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+//                    line_bias=0;
                 }
                 else if(inflection_info_in->findFlag & inflection_lower_right) //将右上拐点拉到右下
                 {
                     patchLine(inflection_info_in->y_lower_right, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
+//                    line_bias=0;
                 }
                 else
                 {
@@ -597,8 +756,6 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
                 }
                 return 8;
                 break;
-
-
         }
     }
     else
@@ -662,8 +819,7 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
     char str[40];
     sprintf(str,"s:%d,l:%d,r:%d",separate_flag,x_left_lotCnt,x_right_lotCnt);
     tjrc_st7735_dispStr612(2,146,(uint8_t*)str,RGB565_GREEN);
-    tjrc_st7735_dispStr612(2,146,(uint8_t*)str,RGB565_GREEN);
-
+    /* ___separate___ */
     /* =============================================三岔状态机=============================================== */
     uint8_t turn = 1;
 //    separate_flag = separate_flag & is_separate;
@@ -671,10 +827,12 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
     {
         /* 状态0：进入三岔状态  */
         case 0:
-            if ((inflection_info_in->findFlag & inflection_lower_left) && (inflection_info_in->findFlag & inflection_lower_right)
-               && (!(inflection_info_in->findFlag & inflection_upper_right)) && (!(inflection_info_in->findFlag & inflection_upper_left)))
+//            if ((inflection_info_in->findFlag & inflection_lower_left) && (inflection_info_in->findFlag & inflection_lower_right)
+//               && (!(inflection_info_in->findFlag & inflection_upper_right) && !(inflection_info_in->findFlag & inflection_upper_left)))
+            if (!(inflection_info_in->findFlag & inflection_upper_right) && !(inflection_info_in->findFlag & inflection_upper_left))
             {
-                if(x_left_lotCnt >=20 && x_right_lotCnt >=20 && is_separate) //同时满足两个状态时，判断为三岔，TODO，可能与中十字状态一致，需加强条件
+                if(x_left_lotCnt >=40 && x_right_lotCnt >=40 && is_separate) //同时满足两个状态时，判断为三岔，TODO，可能与中十字状态一致，需加强条件
+//                if(left_lower_lotCnt >=20 && right_lower_lotCnt >=20 && is_separate)
                 {
                     separate_flag=1;
                     return 10;
@@ -689,26 +847,27 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
                 line_bias=-5;
                 line_info_out->x_right[10] = 80;
                 patchLine(10, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_right);
-                if(right_lower_lotCnt>=50)
+                if(x_right_lotCnt<=15)
                 {
                     separate_flag=0;
                     line_bias=0;
                 }
-
             }
             else if (turn == 1) //右转，左边会不丢线
             {
                 line_bias=5;
                 line_info_out->x_left[10] = 40;
                 patchLine(10, IMAGE_HEIGHT - IMAGE_ROW_KEEPOUT_PIXEL, line_info_out->x_left);
-                if(left_lower_lotCnt>=50)
+                if(x_left_lotCnt<=15)
                 {
                     separate_flag=0;
                     line_bias=0;
                 }
             }
+            return 16;
             break;
     }
+
     return 0;
 }
 
@@ -778,25 +937,33 @@ static void patchLine(uint8_t y0, uint8_t y1, uint8_t *line_x_out)
  * @param image
  * @return uint8_t
  */
-uint8_t check_gridLine(const uint8_t *image)
+uint8_t check_gridLine(const uint8_t *image, line_info *line_info_in)
 {
     /* 定义扫描起止行（上0下80） */
-    const uint8_t row_begin = 45, row_end = 70;
+    const uint8_t row_begin = 54, row_end = 79;
     /* 定义扫描斑马线黑线宽度上下阈值 */
-    const uint8_t grid_min = 5, grid_max = 10;
+    const uint8_t grid_min = 3, grid_max = 8; //sobel 5 10; otsu 3 8
     /* 定义斑马线黑块个数判断阈值(正常有7块) */
     const uint8_t blocks_min = 5, blocks_max = 10;
     /* 定义最少判定为斑马线的正确判断次数 */
     const uint8_t times_min = 3;
     /* 记录正确判断次数 */
     uint8_t times = 0;
+
+//    if(line_info_in->pixel_cnt<80-row_begin)
+//    {
+//        row_begin=80-line_info_in->pixel_cnt;
+//    }
+
     for (uint8_t y = row_begin; y <= row_end; y++)
     {
         uint8_t blocks = 0;
         uint8_t cursor = 0; //指向栈顶的游标
         const uint8_t *row_ptr = &(image[IMAGE_WIDTH * y]);
+
         /* 横向遍历当前行 */
-        for (uint8_t x = IMAGE_COL_KEEPOUT_PIXEL; x < IMAGE_WIDTH - IMAGE_COL_KEEPOUT_PIXEL; x++)
+//        for (uint8_t x = line_info_in->x_left[y]; x < line_info_in->x_right[y]; x++)
+        for (uint8_t x = 3; x < 117; x++)
         {
             /* 若当前为黑色像素，则累加黑色像素宽度；若为白色，则结束宽度累加，
                             计算当前黑块宽度，如果宽度合适，则算作一次合格黑色斑马线 */
@@ -824,19 +991,172 @@ uint8_t check_gridLine(const uint8_t *image)
         return 0;
 }
 
+uint8_t tjrc_check_120turn(const line_info* line_info_in, uint8_t mode, uint8_t find[2])
+{
+#define TURN_STATE_INIT 0x00
+#define TURN_STATE_LOWER_LOSS 0x01
+#define TURN_STATE_LOWER_HALF 0x02
+#define TURN_STSTE_UPPER_HALF 0x03
+#define TURN_STATE_UPPER_LOSS 0x04
+#define TURN_STATE_ERROR 0x10
+
+    if (mode == 0)
+    {
+        uint8_t turn_state = TURN_STATE_INIT;
+        uint8_t left_120turn_find = 0;
+        /* ___________left______ */
+        for (uint16_t i = IMAGE_HEIGHT - IMAGE_COL_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+        {
+//            printf("[%d]left sta:%d\n", i, turn_state);
+            switch (turn_state)
+            {
+            case TURN_STATE_INIT:
+                if (!line_info_in->x_left_findEdge[i])
+                    turn_state = TURN_STATE_LOWER_LOSS;
+                else
+                {
+                    turn_state = TURN_STATE_LOWER_HALF;
+                    find[0] = i;
+//                    printf("find[0]:%d\n", find[0]);
+                }
+
+                break;
+            case TURN_STATE_LOWER_LOSS:
+                if (line_info_in->x_left_findEdge[i])
+                {
+                    turn_state = TURN_STATE_LOWER_HALF;
+                    find[0] = i;
+//                    printf("find[0]:%d\n", find[0]);
+                }
+
+                break;
+            case TURN_STATE_LOWER_HALF:
+                if (!line_info_in->x_left_findEdge[i])
+                    turn_state = TURN_STATE_ERROR;
+                else
+                {
+                    if (line_info_in->x_left[i - 1] >= line_info_in->x_left[i])
+                        turn_state = TURN_STATE_LOWER_HALF;
+                    else
+                        turn_state = TURN_STSTE_UPPER_HALF;
+                }
+
+                break;
+            case TURN_STSTE_UPPER_HALF:
+                if (!line_info_in->x_left_findEdge[i])
+                {
+                    turn_state = TURN_STATE_UPPER_LOSS;
+                    find[1] = i;
+//                    printf("find[1]:%d\n", find[1]);
+                }
+
+                else
+                {
+                    if (line_info_in->x_left[i - 1] <= line_info_in->x_left[i])
+                        turn_state = TURN_STSTE_UPPER_HALF;
+                    else
+                        turn_state = TURN_STATE_ERROR;
+                }
+                break;
+            case TURN_STATE_UPPER_LOSS:
+                left_120turn_find = 1;
+                return 1;
+                break;
+            case TURN_STATE_ERROR:
+                break;
+            default:
+                break;
+            }
+        }
+        return 0;
+    }
+
+    if (mode == 1)
+    {
+        uint8_t turn_state = TURN_STATE_INIT;
+        uint8_t right_120turn_find = 0;
+        /* ___________right______ */
+        for (uint16_t i = IMAGE_HEIGHT - IMAGE_COL_KEEPOUT_PIXEL; i >= IMAGE_HEIGHT - IMAGE_INTEREST_REGION; i--)
+        {
+//            printf("[%d]right sta:%d\n", i, turn_state);
+            switch (turn_state)
+            {
+            case TURN_STATE_INIT:
+                if (!line_info_in->x_right_findEdge[i])
+                    turn_state = TURN_STATE_LOWER_LOSS;
+                else
+                {
+                    turn_state = TURN_STATE_LOWER_HALF;
+                    find[0] = i;
+                    printf("find[0]:%d\n", find[0]);
+                }
+
+                break;
+            case TURN_STATE_LOWER_LOSS:
+                if (line_info_in->x_right_findEdge[i])
+                {
+                    turn_state = TURN_STATE_LOWER_HALF;
+                    find[0] = i;
+                    printf("find[0]:%d\n", find[0]);
+                }
+
+                break;
+            case TURN_STATE_LOWER_HALF:
+                if (!line_info_in->x_right_findEdge[i])
+                    turn_state = TURN_STATE_ERROR;
+                else
+                {
+                    if (line_info_in->x_right[i - 1] <= line_info_in->x_right[i])
+                        turn_state = TURN_STATE_LOWER_HALF;
+                    else
+                        turn_state = TURN_STSTE_UPPER_HALF;
+                }
+
+                break;
+            case TURN_STSTE_UPPER_HALF:
+                if (!line_info_in->x_right_findEdge[i])
+                {
+                    turn_state = TURN_STATE_UPPER_LOSS;
+                    find[1] = i;
+                    printf("find[1]:%d\n", find[1]);
+                }
+
+                else
+                {
+                    if (line_info_in->x_right[i - 1] >= line_info_in->x_right[i])
+                        turn_state = TURN_STSTE_UPPER_HALF;
+                    else
+                        turn_state = TURN_STATE_ERROR;
+                }
+                break;
+            case TURN_STATE_UPPER_LOSS:
+                right_120turn_find = 1;
+                return 1;
+                break;
+            case TURN_STATE_ERROR:
+                break;
+            default:
+                break;
+            }
+        }
+        return 0;
+    }
+
+}
 
 
 uint8_t check_separate(const uint8_t* image)
 {
     /* 定义扫描起止行（上0下80） */
-    const uint8_t row_start = 10, row_end = 22;
+    const uint8_t row_start = 20, row_end = 32;
     /* 定义扫描起止列（0-119） */
     const uint8_t col_start = 3, col_end = 117;
     /* 定义计数数组 */
     int8_t count[12];
     uint8_t num = row_end - row_start;
 
-    uint8_t up_cnt = 0;
+    uint8_t up_cnt = 0, down_cnt = 0;
+//    up_cnt = 0, down_cnt = 0;
 
     for (int i = 0; i < num; i++)
     {
@@ -878,7 +1198,7 @@ uint8_t check_separate(const uint8_t* image)
     tjrc_st7735_dispStr612(56,132,(uint8_t*)str,RGB565_GREEN);
     tjrc_st7735_dispStr612(56,132,(uint8_t*)str,RGB565_GREEN);
 
-    if (up_cnt >= 6) return 1;
+    if (up_cnt >= 9) return 1;
     else return 0;
 }
 

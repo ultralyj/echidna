@@ -19,7 +19,7 @@ const uint8_t drive_enable = 1;
 /* 转向控制使能标志变量 */
 const uint8_t turn_enable = 1;
 
-float Angle_zero = -0.025f;  //平衡角度
+float Angle_zero = 0.017f;  //平衡角度
 
 /*******************直立环***********************************/
 
@@ -29,9 +29,9 @@ float Angle_zero = -0.025f;  //平衡角度
  */
 float angle_kp = 300000;//250000;
 float angle_kd = 20000;//15000;
-float angle_ki = 2000;//1500;
-const float Angle_Integral_Max = 0.8;
-
+float angle_ki = 3000;//1500;
+const float Angle_Integral_Max = 1;
+float camera_kp = 0.001, camera_kd = 0.005;//0.001, 0.005
 /**
  * @brief 直接法PID控制直立环
  * 
@@ -47,7 +47,7 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot, float camera_pixel
     static float last_camera_error = 0;
     int32_t pwm_out = 0;
     /* pd融合 */
-    float temp_camera_angle = camera_pixelError*0.001 + (camera_pixelError-last_camera_error)*0.005;
+    float temp_camera_angle = camera_pixelError*camera_kp + (camera_pixelError-last_camera_error)*camera_kd;
     last_camera_error = camera_pixelError;
     /* 获取角度偏移量（IMU测得角度与目标角度之差） */
     angle_bias = angle_kalman - Angle_zero + temp_camera_angle;
@@ -69,9 +69,9 @@ int32_t tjrc_pid_balance(float angle_kalman, float angle_dot, float camera_pixel
  * @brief 速度环PID参数
  * 
  */
-double V_S_Kp = -0.000004;//-0.000016;
-double V_S_Ki = 0.025;
-double V_S_Kd = 0.3;//0.15;
+double V_S_Kp = -0.000006;//-0.000016;
+double V_S_Ki = 0.04;
+double V_S_Kd = 1;//0.15;
 const double V_S_Integral_Max = 0.008;
 
 /**
@@ -105,16 +105,16 @@ float tjrc_pid_speedLoop(float _V_S_Bias)
     /* D:微分 */
     V_S_Diff = (Angle_Diff - Angle_Diff_Last) * V_S_Kd;
     /* I:积分 */
-    if (f_Abs(V_S_Bias) > 50)
+    if (f_Abs(V_S_Bias) > 0)
         V_S_Integral = ((double)Angle_New) * V_S_Ki;
 
     /* 积分限幅 */
-    V_S_Integral = float_Constrain(V_S_Integral, -V_S_Integral_Max, V_S_Integral_Max);
+    V_S_Integral = double_Constrain(V_S_Integral, -V_S_Integral_Max, V_S_Integral_Max);
 //        V_S_Integral=0;  //不使用积分
 //        V_S_Diff = 0;//不使用微分
 
     /* 结果加和并且进行平滑处理，需要与分频一致 */
-    float Angle_delta = (double)(Angle_Diff + V_S_Diff + V_S_Integral) / 10.0;
+    float Angle_delta = (float)(Angle_Diff + V_S_Diff + V_S_Integral) / 10.0;
     return Angle_delta;
 }
 
@@ -157,7 +157,7 @@ int32_t tjrc_pid_drive(float speed)
     last_duty = duty;
     last_Dr_Bias = Dr_Bias;
     /* 输出限幅 */
-    duty = int16_t_Constrain(duty,0,6000);
+    duty = int16_t_Constrain(duty,-1000,6000);
     /* 输出占空比 */
     return duty;
 }
@@ -359,7 +359,7 @@ void tjrc_motionControl(void)
                     steer_direct = -1;
                     // Turn_delta = direct*kkp*drive_encoder;//计算得到此次的压弯角度
                 }
-                float direct = direct_target + b_turn_target + b_turn_delta/4;
+                float direct = direct_target + b_turn_target + b_turn_delta/8;//4
                 direct = float_Constrain(direct, -26, 26);
                 tjrc_servo_setAngle(direct);
             }
