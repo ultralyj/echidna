@@ -13,6 +13,7 @@
 
 static void tjrc_kalman(float angle_m, float gyro_m , float* angle_kalman,float*angle_dot);
 float angleRaw;
+float anglePitch =0.0;
 /**
  * @brief 采集IMU数据，对IMU数据进行换算，最终使用卡尔曼滤波解算姿态信息
  * 
@@ -34,6 +35,7 @@ void tjrc_getAngle_kalman(float* angle_kalman, float* angle_dot)
 	Gyro_Speed= -(float)((float)icm_gyro_y*2000/(32768) )*(float)Gyro_Parameter;
 	Gyro_Speed_X=-(float)((float)icm_gyro_x*2000/(32768) )*(float)Gyro_Parameter;
 
+	anglePitch = (float) icm_acc_y/4096;
 	/* 卡尔曼滤波 */
 	tjrc_kalman(-angleRaw,Gyro_Speed, angle_kalman, angle_dot);
 }

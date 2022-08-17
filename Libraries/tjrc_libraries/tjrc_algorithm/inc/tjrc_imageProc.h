@@ -59,6 +59,8 @@
 
 #define tjrc_abs(X) (X >= 0 ? X : -X)
 
+#define WEIGHT_MODE_NORMOL 0x01
+#define WEIGHT_MODE_LOWER 0x02
 
 typedef struct
 {
@@ -115,11 +117,10 @@ uint8_t tjrc_imageProc_patchLine(line_info* line_info_out, inflection_info* infl
 void tjrc_imageProc_updateImage(uint8_t* image, line_info* line_info_in, inflection_info* inflection_info_in);
 
 /* 赛道元素判断函数组 */
-uint8_t check_gridLine(const uint8_t* image, line_info *line_info_in);
+uint8_t check_gridLine(const uint8_t* image);
 uint8_t check_separate(const uint8_t* image);
-int is_inRoundabout();
-int check_roundabout(inflection_info* inflection_info_in, line_info* line_info_in);
-uint8_t tjrc_check_120turn(const line_info* line_info_in, uint8_t mode, uint8_t find[2]);
+int check_roundabout(const inflection_info* inflection_info_in, const line_info* line_info_in);
+uint8_t check_120turn(const line_info* line_info_in, uint8_t mode, uint8_t find[2]);
 
 /* 图像log信息调试函数（一般为空，调试时正常输出） */
 int tjrc_log(char* format, ...);

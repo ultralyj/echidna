@@ -12,6 +12,8 @@
 #include "tjrc_threads.h"
 #include "math.h"
 
+rt_tick_t time_start;
+
 
 /**
  * @brief IMU中断信号量
@@ -86,6 +88,8 @@ static void balance_entry(void *parameter)
         /* 当IMU发出中断信号，依次进行滤波与串级PID */
         if (rt_sem_take(imu_irq_sem, RT_WAITING_FOREVER) == RT_EOK)
         {
+            time_start = rt_tick_get();
+
             tjrc_motionControl();
         }
     }

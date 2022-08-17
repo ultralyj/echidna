@@ -14,6 +14,8 @@
 
 #include "tjrc_peripherals.h"
 
+#define SERVO_MAX_ANGLE 26.0f
+
 float tjrc_servo_setAngle(float servoAngle);
 
 
